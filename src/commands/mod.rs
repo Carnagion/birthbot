@@ -8,6 +8,7 @@ use serenity::model::application::interaction::Interaction;
 use serenity::model::gateway::Ready;
 #[cfg(feature = "guild")]
 use serenity::model::id::GuildId;
+#[cfg(not(feature = "guild"))]
 use serenity::model::prelude::command::Command;
 
 mod birthday;
