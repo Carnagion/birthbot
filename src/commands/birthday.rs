@@ -1,8 +1,5 @@
 use std::env;
 
-use datetime::LocalDate;
-use datetime::Month;
-
 use mongodb::Client;
 use mongodb::Database;
 use mongodb::bson;
@@ -22,8 +19,8 @@ use serenity::prelude::Context;
 
 use crate::macros;
 
-const DATABASE_URI_KEY: &str = "DATABASE";
-const CLUSTER_KEY: &str = "CLUSTER";
+const CLUSTER_URI_KEY: &str = "CLUSTER";
+const DATABASE_KEY: &str = "DATABASE";
 
 pub fn create_birthday_command(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
@@ -82,7 +79,7 @@ pub async fn handle_birthday_command(command: &ApplicationCommandInteraction, co
                     match subcommand.name.as_str() {
                         "get" => handle_birthday_get_subcommand(subcommand, command, context, &guild_id).await,
                         "set" => handle_birthday_set_subcommand(subcommand, command, context, &guild_id).await,
-                        subcommand_name => macros::command_response!(format!(r#"Error: the sub-command "{subcommand_name}" is not recognised."#), command, context),
+                        subcommand_name => macros::command_response!(format!(r#"Error: the sub-command "{}" is not recognised."#, subcommand_name), command, context),
                     }
                 },
             }
@@ -96,7 +93,7 @@ async fn handle_birthday_get_subcommand(subcommand: &CommandDataOption, command:
             Err(error) => macros::command_response!(error, command, context),
             Ok(database) => {
                 let filter = bson::doc! {
-                    "user-id": format!("User-{}", user.id),
+                    "user": user.id.to_string(),
                 };
                 let result = database
                     .collection::<Document>(guild_id.to_string().as_str())
@@ -142,18 +139,62 @@ async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command:
     let option_day = macros::require_command_option!(subcommand.options.get(0), "day", Integer, command, context);
     let option_month = macros::require_command_option!(subcommand.options.get(1), "month", Integer, command, context);
     let option_year = macros::require_command_option!(subcommand.options.get(2), "year", Integer, command, context);
-    if let (Some(day), Some(month_num), Some(year)) = (option_day, option_month, option_year) {
-        match Month::from_one(*month_num as i8) {
-            Err(error) => macros::command_response!(error.to_string(), command, context),
-            Ok(month) => {
-                match LocalDate::ymd(*year, month, *day as i8) {
-                    Err(error) => macros::command_response!(error.to_string(), command, context),
-                    Ok(date) => {
-                        if let Some(user) = macros::require_command_user_or_default!(subcommand.options.get(3), command, context) {
-                            match connect_mongodb().await {
-                                Err(error) => macros::command_response!(error, command, context),
-                                Ok(database) => {
-                                }
+    if let (Some(day), Some(month), Some(year)) = (option_day, option_month, option_year) {
+        let builder = DateTime::builder()
+            .year(*year as i32)
+            .month(*month as u8)
+            .day(*day as u8)
+            .build();
+        match builder {
+            Err(error) => macros::command_response!(format!("Error: {}.", error), command, context),
+            Ok(date) => {
+                if let Some(user) = macros::require_command_user_or_default!(subcommand.options.get(3), command, context) {
+                    match connect_mongodb().await {
+                        Err(error) => macros::command_response!(error, command, context),
+                        Ok(database) => {
+                            let filter = bson::doc! {
+                                "user": user.id.to_string(),
+                            };
+                            let replacement = bson::doc! {
+                                "user": user.id.to_string(),
+                                "birthday": date,
+                            };
+                            let collection = database.collection::<Document>(guild_id.to_string().as_str());
+                            let replace_result = collection
+                                .find_one_and_replace(filter, &replacement, None)
+                                .await;
+                            match replace_result {
+                                Err(error) => {
+                                    macros::command_response!("Error: something went wrong unexpectedly.", command, context);
+                                    println!("Error: {:?}", error);
+                                },
+                                Ok(Some(_)) => {
+                                    let message = if user.id == command.user.id {
+                                        String::from("Your birthday was successfully updated.")
+                                    } else {
+                                        format!("<@{}>'s birthday was successfully updated.", user.id)
+                                    };
+                                    macros::command_response!(message, command, context);
+                                },
+                                Ok(None) => {
+                                    let insert_result = collection
+                                        .insert_one(&replacement, None)
+                                        .await;
+                                    match insert_result {
+                                        Err(error) => {
+                                            macros::command_response!("Error: something went wrong unexpectedly.", command, context);
+                                            println!("Error: {:?}", error);
+                                        },
+                                        Ok(_) => {
+                                            let message = if user.id == command.user.id {
+                                                String::from("Your birthday was successfully set.")
+                                            } else {
+                                                format!("<@{}>'s birthday was successfully set.", user.id)
+                                            };
+                                            macros::command_response!(message, command, context);
+                                        },
+                                    }
+                                },
                             }
                         }
                     }
@@ -164,14 +205,20 @@ async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command:
 }
 
 async fn connect_mongodb() -> Result<Database, String> {
-    let database_uri = env::var(DATABASE_URI_KEY)
-        .map_err(|error| error.to_string())?;
-    let client_options = ClientOptions::parse_with_resolver_config(&database_uri, ResolverConfig::cloudflare())
+    let uri = env::var(CLUSTER_URI_KEY)
+        .map_err(|error| format!("Error: {}.", error))?;
+    let client_options = ClientOptions::parse_with_resolver_config(&uri, ResolverConfig::cloudflare())
         .await
-        .map_err(|error| format!("{error}"))?;
+        .map_err(|error| {
+            println!("Error: {:?}", error);
+            String::from("Error: something went wrong unexpectedly.")
+        })?;
     let client = Client::with_options(client_options)
-        .map_err(|error| format!("{error}"))?;
-    let cluster = env::var(CLUSTER_KEY)
-        .map_err(|error| error.to_string())?;
-    Ok(client.database(cluster.as_str()))
+        .map_err(|error| {
+            println!("Error: {:?}", error);
+            String::from("Error: something went wrong unexpectedly.")
+        })?;
+    let database = env::var(DATABASE_KEY)
+        .map_err(|error| format!("Error: {}.", error))?;
+    Ok(client.database(database.as_str()))
 }
