@@ -43,7 +43,7 @@ impl EventHandler for BirthdayCommandHandler {
         if let Interaction::ApplicationCommand(command) = interaction {
             match command.data.name.as_str() {
                 "birthday" => birthday::handle_birthday_command(&command, &context).await,
-                command_name => macros::command_response!(format!(r#"Unrecognised command "{command_name}"#), &command, &context),
+                command_name => macros::command_response!(format!(r#"Error: the command "{}" is not recognised."#, command_name), &command, &context),
             }
         }
     }
