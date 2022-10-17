@@ -13,6 +13,17 @@ macro_rules! command_response {
 pub use command_response;
 
 #[macro_export]
+macro_rules! command_error {
+    ($message:expr, $command:expr, $context:expr) => {
+        crate::macros::command_response!($message, $command, $context, true)
+            .map_err(|error| println!("{:?}", error))
+            .map_or((), |_| ())
+    };
+}
+
+pub use command_error;
+
+#[macro_export]
 macro_rules! resolve_command_option {
     ($option:expr, $kind:ident, $name:expr) => {
         match &$option.kind {

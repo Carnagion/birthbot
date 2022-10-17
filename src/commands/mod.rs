@@ -5,7 +5,6 @@ use serenity;
 use serenity::builder::CreateApplicationCommands;
 use serenity::client::Context;
 use serenity::client::EventHandler;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::gateway::Ready;
 #[cfg(feature = "guild")]
@@ -42,9 +41,12 @@ impl EventHandler for BotEventHandler {
                 "birthday" => birthday::handle_birthday_command(&command, &context).await,
                 command_name => Err(BotError::CommandError(format!("The command {} is unrecognised.", command_name))),
             };
-            if let Err(error) = result {
-                println!("{:?}", error);
-                command_error(&command, &context).await;
+            if let Err(bot_error) = result {
+                println!("{:?}", bot_error);
+                match bot_error {
+                    BotError::UserError(user_error) => macros::command_error!(user_error, &command, &context),
+                    _ => macros::command_error!("An unexpected error occurred while processing that command.", &command, &context),
+                }
             }
         }
     }
@@ -64,15 +66,8 @@ async fn set_global_commands(context: &Context) -> Result<Vec<Command>, BotError
 
 #[cfg(feature = "guild")]
 async fn set_guild_commands(context: &Context) -> Result<Vec<Command>, BotError> {
-    GuildId(env::var(GUILD_KEY)?
+    Ok(GuildId(env::var(GUILD_KEY)?
             .parse()?)
         .set_application_commands(&context.http, &create_commands)
-        .await
-        .map_err(BotError::SerenityError)
-}
-
-async fn command_error(command: &ApplicationCommandInteraction, context: &Context) {
-    macros::command_response!("An unexpected error occurred while processing that command.", command, context, true)
-        .map_err(|error| println!("{:?}", error))
-        .map_or((), |_| ())
+        .await?)
 }

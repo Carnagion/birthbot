@@ -85,7 +85,7 @@ pub async fn handle_birthday_command(command: &ApplicationCommandInteraction, co
 async fn handle_birthday_get_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
     let user = macros::require_command_user_option!(subcommand.options.get(0), "user", &command.user);
     let guild = command.guild_id
-        .ok_or(BotError::CommandError(String::from("This command can only be performed in a guild.")))?;
+        .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     let query = bson::doc! {
         user.id.to_string().as_str(): {
             "$exists": true,
@@ -111,10 +111,10 @@ async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command:
         .month(*month as u8)
         .day(*day as u8)
         .build()
-        .map_err(|_| BotError::CommandError(String::from("The date provided is invalid.")))?;
+        .map_err(|_| BotError::UserError(String::from("The date provided is invalid.")))?;
     let user = macros::require_command_user_option!(subcommand.options.get(3), "user", &command.user);
     let guild = command.guild_id
-        .ok_or(BotError::CommandError(String::from("This command can only be performed in a guild.")))?;
+        .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     let query = bson::doc! {
         user.id.to_string(): {
             "$exists": true,

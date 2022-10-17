@@ -1,2 +1,2 @@
-mod bot_error;
-pub use bot_error::*;
+mod bot;
+pub use bot::*;
