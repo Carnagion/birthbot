@@ -7,7 +7,7 @@ use serenity::prelude::GatewayIntents;
 
 use tokio;
 
-use birthbot::commands::BotEventHandler;
+use birthbot::BotEventHandler;
 use birthbot::errors::BotError;
 
 const TOKEN_KEY: &str = "TOKEN";

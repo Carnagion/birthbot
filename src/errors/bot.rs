@@ -8,14 +8,22 @@ use mongodb::error::Error as MongoError;
 
 use serenity::prelude::SerenityError;
 
+/// An error that can occur during command handling.
 #[derive(Debug)]
 pub enum BotError {
+    /// A user error, such as providing an invalid option value.
     UserError(String),
+    /// An error related to the Discord command API.
     CommandError(String),
+    /// An error related to the Serenity API.
     SerenityError(SerenityError),
+    /// An error related to the MongoDB API.
     MongoError(MongoError),
+    /// An error related to the BSON document API.
     BsonError(ValueAccessError),
+    /// An error related to environment variables.
     EnvError(EnvError),
+    /// An error related to parsing a [String] into a number.
     ParseError(ParseIntError),
 }
 
