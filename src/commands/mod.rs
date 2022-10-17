@@ -1,56 +1,78 @@
 #[cfg(feature = "guild")]
 use std::env;
 
+use serenity;
 use serenity::builder::CreateApplicationCommands;
 use serenity::client::Context;
 use serenity::client::EventHandler;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::gateway::Ready;
 #[cfg(feature = "guild")]
 use serenity::model::id::GuildId;
-#[cfg(not(feature = "guild"))]
 use serenity::model::prelude::command::Command;
 
 mod birthday;
 
+use crate::errors::BotError;
 use crate::macros;
 
 #[cfg(feature = "guild")]
-const GUILD_ID_KEY: &str = "GUILD";
+const GUILD_KEY: &str = "GUILD";
 
-pub struct BirthdayCommandHandler;
+pub struct BotEventHandler;
 
 #[serenity::async_trait]
-impl EventHandler for BirthdayCommandHandler {
-    async fn ready(&self, context: Context, _ready: Ready) {
+impl EventHandler for BotEventHandler {
+    async fn ready(&self, context: Context, _: Ready) {
         #[cfg(not(feature = "guild"))]
-        // Set global commands
-        if let Err(error) = Command::set_global_application_commands(&context.http, &create_application_commands).await {
-            println!("{}", error);
+        if let Err(error) = set_global_commands(&context).await {
+            println!("{:?}", error);
         }
 
         #[cfg(feature = "guild")]
-        // Set commands specific to guild
-        GuildId(env::var(GUILD_ID_KEY)
-                .expect("todo")
-                .parse()
-                .expect("todo"))
-            .set_application_commands(&context.http, &create_application_commands)
-            .await
-            .expect("todo");
+        if let Err(error) = set_guild_commands(&context).await {
+            println!("{:?}", error);
+        }
     }
 
     async fn interaction_create(&self, context: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
-            match command.data.name.as_str() {
+            let result = match command.data.name.as_str() {
                 "birthday" => birthday::handle_birthday_command(&command, &context).await,
-                command_name => macros::command_response!(format!(r#"Error: the command "{}" is not recognised."#, command_name), &command, &context),
+                command_name => Err(BotError::CommandError(format!("The command {} is unrecognised.", command_name))),
+            };
+            if let Err(error) = result {
+                println!("{:?}", error);
+                command_error(&command, &context).await;
             }
         }
     }
 }
 
-fn create_application_commands(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
+fn create_commands(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
     commands
         .create_application_command(&birthday::create_birthday_command)
+}
+
+#[cfg(not(feature = "guild"))]
+async fn set_global_commands(context: &Context) -> Result<Vec<Command>, BotError> {
+    Command::set_global_application_commands(&context.http, &create_commands)
+        .await
+        .map_err(BotError::SerenityError)
+}
+
+#[cfg(feature = "guild")]
+async fn set_guild_commands(context: &Context) -> Result<Vec<Command>, BotError> {
+    GuildId(env::var(GUILD_KEY)?
+            .parse()?)
+        .set_application_commands(&context.http, &create_commands)
+        .await
+        .map_err(BotError::SerenityError)
+}
+
+async fn command_error(command: &ApplicationCommandInteraction, context: &Context) {
+    macros::command_response!("An unexpected error occurred while processing that command.", command, context, true)
+        .map_err(|error| println!("{:?}", error))
+        .map_or((), |_| ())
 }

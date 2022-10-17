@@ -5,29 +5,25 @@ use dotenv;
 use serenity::Client;
 use serenity::prelude::GatewayIntents;
 
-mod commands;
-mod macros;
+use tokio;
 
-use crate::commands::BirthdayCommandHandler;
+mod commands;
+use commands::BotEventHandler;
+
+mod errors;
+use errors::BotError;
+
+mod macros;
 
 const TOKEN_KEY: &str = "TOKEN";
 
 #[tokio::main]
-async fn main() {
-    // Load .env file
-    dotenv::dotenv()
-        .expect("The .env file could not be loaded.");
-
-    // Retrieve token
-    let token = env::var(TOKEN_KEY)
-        .expect("The client token is invalid or non-existent.");
-    
-    // Initialise bot client
-    Client::builder(token, GatewayIntents::GUILDS)
-        .event_handler(BirthdayCommandHandler)
-        .await
-        .expect("The command handler could not be attached to the client.")
+async fn main() -> Result<(), BotError> {
+    dotenv::dotenv()?;
+    Client::builder(env::var(TOKEN_KEY)?, GatewayIntents::empty())
+        .event_handler(BotEventHandler)
+        .await?
         .start()
-        .await
-        .expect("The client could not be started.");
+        .await?;
+    Ok(())
 }
