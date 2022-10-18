@@ -8,12 +8,13 @@ use serenity::client::EventHandler;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::gateway::Ready;
 
+#[macro_use]
+mod macros;
+
 pub mod commands;
 
 pub mod errors;
 use errors::BotError;
-
-mod macros;
 
 /// An [EventHandler] attached to the bot client.
 pub struct BotEventHandler;

@@ -17,11 +17,11 @@ use serenity::model::user::User;
 use serenity::prelude::Context;
 
 use crate::errors::BotError;
-use crate::macros;
 
 const CLUSTER_KEY: &str = "CLUSTER";
 const DATABASE_KEY: &str = "DATABASE";
 
+/// Generates the `birthday` command and its subcommands.
 pub fn create_birthday_command(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
         .name("birthday")
@@ -69,6 +69,15 @@ fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandOptio
             .required(false))
 }
 
+/// Handles the `birthday` command and its subcommands.
+///
+/// # Errors
+/// A [BotError] is returned if there is an error including but not limited to:
+/// - Accessing the database
+/// - Loading environment variables
+/// - Resolving command options
+///
+/// etc.
 pub async fn handle_birthday_command(command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
     let subcommand = command
         .data
@@ -83,7 +92,7 @@ pub async fn handle_birthday_command(command: &ApplicationCommandInteraction, co
 }
 
 async fn handle_birthday_get_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
-    let user = macros::require_command_user_option!(subcommand.options.get(0), "user", &command.user);
+    let user = require_command_user_option!(subcommand.options.get(0), "user", &command.user);
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     let query = bson::doc! {
@@ -98,21 +107,21 @@ async fn handle_birthday_get_subcommand(subcommand: &CommandDataOption, command:
         .find_one(query, None)
         .await?;
     let message = birthday_get_message(result, user, command)?;
-    macros::command_response!(message, command, context, true)
+    command_response!(message, command, context, true)
         .map_err(BotError::SerenityError)
 }
 
 async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
-    let day = macros::require_command_int_option!(subcommand.options.get(0), "day")?;
-    let month = macros::require_command_int_option!(subcommand.options.get(1), "month")?;
-    let year = macros::require_command_int_option!(subcommand.options.get(2), "year")?;
+    let day = require_command_int_option!(subcommand.options.get(0), "day")?;
+    let month = require_command_int_option!(subcommand.options.get(1), "month")?;
+    let year = require_command_int_option!(subcommand.options.get(2), "year")?;
     let date = DateTime::builder()
         .year(*year as i32)
         .month(*month as u8)
         .day(*day as u8)
         .build()
         .map_err(|_| BotError::UserError(String::from("The date provided is invalid.")))?;
-    let user = macros::require_command_user_option!(subcommand.options.get(3), "user", &command.user);
+    let user = require_command_user_option!(subcommand.options.get(3), "user", &command.user);
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     let query = bson::doc! {
@@ -138,7 +147,7 @@ async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command:
         },
         Some(_) => birthday_set_message("updated", user, command),
     };
-    macros::command_response!(message, command, context, true)
+    command_response!(message, command, context, true)
         .map_err(BotError::SerenityError)
 }
 
