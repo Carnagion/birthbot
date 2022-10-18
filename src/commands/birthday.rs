@@ -88,11 +88,13 @@ fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandOptio
 ///
 /// etc.
 pub async fn handle_birthday_command(command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
+    // Retrieve sub-command
     let subcommand = command
         .data
         .options
         .get(0)
         .ok_or(BotError::CommandError(String::from("A sub-command is expected.")))?;
+    // Handle sub-command based on name
     match subcommand.name.as_str() {
         "get" => handle_birthday_get_subcommand(subcommand, command, context).await,
         "set" => handle_birthday_set_subcommand(subcommand, command, context).await,
@@ -101,12 +103,16 @@ pub async fn handle_birthday_command(command: &ApplicationCommandInteraction, co
 }
 
 async fn handle_birthday_get_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
+    // Retrieve command options
     let user = require_command_user_option!(subcommand.options.get(0), "user", &command.user);
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
+    // Build query document
     let query = bson_birthday!(user.id.to_string());
+    // Connect to database and find collection
     let database = connect_mongodb().await?;
     let collection = database.collection::<Document>(guild.to_string().as_str());
+    // Retrieve document
     let result = collection
         .find_one(query, None)
         .await?;
@@ -115,6 +121,7 @@ async fn handle_birthday_get_subcommand(subcommand: &CommandDataOption, command:
 }
 
 async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
+    // Retrieve command options
     let day = *require_command_int_option!(subcommand.options.get(0), "day")? as i32;
     let month = *require_command_int_option!(subcommand.options.get(1), "month")? as i32;
     let year = *require_command_int_option!(subcommand.options.get(2), "year")? as i32;
@@ -128,6 +135,7 @@ async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command:
     let user = require_command_user_option!(subcommand.options.get(4), "user", &command.user);
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
+    // Build query and replacement documents
     let query = bson_birthday!(user.id.to_string());
     let document = bson::doc! {
         user.id.to_string(): {
@@ -139,8 +147,10 @@ async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command:
             },
         },
     };
+    // Connect to database and find collection
     let database = connect_mongodb().await?;
     let collection = database.collection::<Document>(guild.to_string().as_str());
+    // Insert or replace document
     let replacement = collection
         .find_one_and_replace(query, &document, None)
         .await?;
@@ -166,6 +176,7 @@ async fn connect_mongodb() -> Result<Database, BotError> {
 
 async fn respond_birthday_get(result: Option<Document>, user: &User, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
     match result {
+        // If query returned nothing, birthday has not been set yet
         None => {
             let description = if user.id == command.user.id {
                 String::from("You haven't set a birthday yet.")
@@ -179,8 +190,10 @@ async fn respond_birthday_get(result: Option<Document>, user: &User, command: &A
                     .description(description)
                     .colour(Colour::from_rgb(237, 66, 69))))
         },
+        // If query returned a document, parse and show the birthday
         Some(document) => {
-            let birthday = document.get_document(user.id.to_string())?
+            let birthday = document
+                .get_document(user.id.to_string())?
                 .get_document("birth")?;
             let day = birthday.get_i32("day")?;
             let month = birthday.get_i32("month")?;
