@@ -189,9 +189,9 @@ fn birthday_get_message(result: Option<Document>, user: &User, command: &Applica
                 .and_hms(0, 0, 0);
             let date = DateTime::<FixedOffset>::from_utc(naive, timezone);
             Ok(if user.id == command.user.id {
-                format!("Your birthday is on {}.", date)
+                format!("Your birthday is on {}.", date.date())
             } else {
-                format!("<@{}>'s birthday is on {}.", user.id, date)
+                format!("<@{}>'s birthday is on {}.", user.id, date.date())
             })
         },
     }
@@ -199,8 +199,8 @@ fn birthday_get_message(result: Option<Document>, user: &User, command: &Applica
 
 fn birthday_set_message(date: &DateTime<FixedOffset>, action: impl Into<String>, user: &User, command: &ApplicationCommandInteraction) -> String {
     if user.id == command.user.id {
-        format!("Your birthday was successfully {} to {}.", action.into(), date)
+        format!("Your birthday was successfully {} to {}.", action.into(), date.date())
     } else {
-        format!("<@{}>'s birthday was successfully {} to {}.", user.id, action.into(), date)
+        format!("<@{}>'s birthday was successfully {} to {}.", user.id, action.into(), date.date())
     }
 }
