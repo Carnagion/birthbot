@@ -18,6 +18,7 @@ use serenity::model::application::interaction::application_command::ApplicationC
 use serenity::model::application::interaction::application_command::CommandDataOption;
 use serenity::model::user::User;
 use serenity::prelude::Context;
+use serenity::utils::Colour;
 
 use crate::errors::BotError;
 
@@ -109,9 +110,8 @@ async fn handle_birthday_get_subcommand(subcommand: &CommandDataOption, command:
     let result = collection
         .find_one(query, None)
         .await?;
-    let message = birthday_get_message(result, user, command)?;
-    command_response!(message, command, context, true)
-        .map_err(BotError::SerenityError)
+    respond_birthday_get(result, user, command, context)
+        .await
 }
 
 async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
@@ -144,17 +144,15 @@ async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command:
     let replacement = collection
         .find_one_and_replace(query, &document, None)
         .await?;
-    let message = match replacement {
+    match replacement {
         None => {
             collection
                 .insert_one(&document, None)
                 .await?;
-            birthday_set_message(&date, "set", user, command)
+            respond_birthday_set(&date, "set", user, command, context).await
         },
-        Some(_) => birthday_set_message(&date, "updated", user, command),
-    };
-    command_response!(message, command, context, true)
-        .map_err(BotError::SerenityError)
+        Some(_) => respond_birthday_set(&date, "updated", user, command, context).await,
+    }
 }
 
 async fn connect_mongodb() -> Result<Database, BotError> {
@@ -166,14 +164,20 @@ async fn connect_mongodb() -> Result<Database, BotError> {
     Ok(client.database(database.as_str()))
 }
 
-fn birthday_get_message(result: Option<Document>, user: &User, command: &ApplicationCommandInteraction) -> Result<String, BotError> {
+async fn respond_birthday_get(result: Option<Document>, user: &User, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
     match result {
         None => {
-            Ok(if user.id == command.user.id {
+            let description = if user.id == command.user.id {
                 String::from("You haven't set a birthday yet.")
             } else {
                 format!("<@{}> hasn't set a birthday yet.", user.id)
-            })
+            };
+            command_response!(command, context, |data| data
+                .ephemeral(true)
+                .embed(|embed| embed
+                    .title("Error")
+                    .description(description)
+                    .colour(Colour::from_rgb(237, 66, 69))))
         },
         Some(document) => {
             let birthday = document.get_document(user.id.to_string())?
@@ -188,19 +192,33 @@ fn birthday_get_message(result: Option<Document>, user: &User, command: &Applica
                 .ok_or(BotError::UserError(String::from("The date provided is invalid.")))?
                 .and_hms(0, 0, 0);
             let date = DateTime::<FixedOffset>::from_utc(naive, timezone);
-            Ok(if user.id == command.user.id {
-                format!("Your birthday is on {}.", date.date())
+            let description = if user.id == command.user.id {
+                String::from("Your birthday was successfully retrieved.")
             } else {
-                format!("<@{}>'s birthday is on {}.", user.id, date.date())
-            })
+                format!("<@{}>'s birthday was successfully retrieved.", user.id)
+            };
+            command_response!(command, context, |data| data
+                .ephemeral(true)
+                .embed(|embed| embed
+                    .title("Success")
+                    .description(description)
+                    .field("Birthday", date.date(), true)
+                    .colour(Colour::from_rgb(87, 242, 135))))
         },
     }
 }
 
-fn birthday_set_message(date: &DateTime<FixedOffset>, action: impl Into<String>, user: &User, command: &ApplicationCommandInteraction) -> String {
-    if user.id == command.user.id {
-        format!("Your birthday was successfully {} to {}.", action.into(), date.date())
+async fn respond_birthday_set(date: &DateTime<FixedOffset>, action: impl Into<String>, user: &User, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
+    let description = if user.id == command.user.id {
+        format!("Your birthday was successfully {}.", action.into())
     } else {
-        format!("<@{}>'s birthday was successfully {} to {}.", user.id, action.into(), date.date())
-    }
+        format!("<@{}>'s birthday was successfully {}.", user.id, action.into())
+    };
+    command_response!(command, context, |data| data
+        .ephemeral(true)
+        .embed(|embed| embed
+            .title("Success")
+            .description(description)
+            .field("Birthday", date.date(), true)
+            .colour(Colour::from_rgb(87, 242, 135))))
 }

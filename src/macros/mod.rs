@@ -1,17 +1,18 @@
 macro_rules! command_response {
-    ($message:expr, $command:expr, $context:expr, $ephemeral:expr) => {
+    ($command:expr, $context:expr, $data:expr) => {
         $command.create_interaction_response(&$context.http, |response| response
                 .kind(serenity::model::prelude::interaction::InteractionResponseType::ChannelMessageWithSource)
-                .interaction_response_data(|data| data
-                    .content($message)
-                    .ephemeral($ephemeral)))
+                .interaction_response_data($data))
             .await
-    };
+            .map_err(crate::errors::BotError::SerenityError)
+    }
 }
 
 macro_rules! command_error {
     ($message:expr, $command:expr, $context:expr) => {
-        command_response!($message, $command, $context, true)
+        command_response!($command, $context, |data| data
+                .content($message)
+                .ephemeral(true))
             .map_err(|error| println!("{:?}", error))
             .map_or((), |_| ())
     };
