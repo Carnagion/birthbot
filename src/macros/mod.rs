@@ -49,3 +49,26 @@ macro_rules! require_command_user_option {
         }
     };
 }
+
+macro_rules! bson_birthday {
+    ($id:expr) => {
+        mongodb::bson::doc! {
+            format!("{}.birth.day", $id): {
+                "$exists": true,
+                "$type": "int",
+            },
+            format!("{}.birth.month", $id): {
+                "$exists": true,
+                "$type": "int",
+            },
+            format!("{}.birth.year", $id): {
+                "$exists": true,
+                "$type": "int",
+            },
+            format!("{}.birth.offset", $id): {
+                "$exists": true,
+                "$type": "int",
+            },
+        }
+    };
+}
