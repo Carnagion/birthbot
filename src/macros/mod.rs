@@ -9,10 +9,12 @@ macro_rules! command_response {
 }
 
 macro_rules! command_error {
-    ($message:expr, $command:expr, $context:expr) => {
+    ($description:expr, $command:expr, $context:expr) => {
         command_response!($command, $context, |data| data
-                .content($message)
-                .ephemeral(true))
+                .ephemeral(true)
+                .embed(|embed| embed
+                    .title("Error")
+                    .description($description)))
             .map_err(|error| println!("{:?}", error))
             .map_or((), |_| ())
     };
