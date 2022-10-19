@@ -39,7 +39,7 @@ impl EventHandler for BotEventHandler {
         if let Interaction::ApplicationCommand(command) = interaction {
             // Handle commands
             let result = match command.data.name.as_str() {
-                "birthday" => commands::handle_birthday_command(&command, &context).await,
+                "birthday" => commands::birthday::handle_birthday_command(&command, &context).await,
                 command_name => Err(BotError::CommandError(format!("The command {} is unrecognised.", command_name))),
             };
             // If the error is a user error, use a specific error message, else use a very general error message
