@@ -1,36 +1,37 @@
 //! Generates and executes the `cron` task for checking birthdays.
 
+use std::time::Duration;
+
 use chrono::Datelike;
 use chrono::Utc;
 
-use cronjob::CronJob;
-
+use mongodb::Collection;
 use mongodb::bson;
 use mongodb::bson::Document;
 
+use serenity::client::Context;
+use serenity::model::id::ChannelId;
+use serenity::utils::Colour;
+
 use tokio;
+use tokio::time;
 
 use crate::errors::BotError;
 
-/// Sets up the `cron` job that checks for birthdays coinciding with the current day.
-pub fn setup_birthday_cron() {
-    let mut cron = CronJob::new("birthday check", execute_birthday_cron);
-    cron/*.seconds("5,10,15,20,25,30,35,40,45,50,55,60")
-        .minutes("0")
-        .hours("0")*/
-        .day_of_month("*")
-        .offset(0);
-    CronJob::start_job_threaded(cron);
+/// Spawns an asynchronous task to check for birthdays every day.
+pub fn create_birthday_scheduler(context: &Context) {
+    let cloned = context.clone();
+    tokio::spawn(async move {
+        loop {
+            if let Err(error) = check_birthdays(&cloned).await {
+                println!("{:?}", error);
+            }
+            time::sleep(Duration::from_secs(86400)).await;
+        }
+    });
 }
 
-#[tokio::main] // Transforms the asynchronous function into a synchronous one, allowing it to be used with cron jobs
-async fn execute_birthday_cron(_: &str) {
-    if let Err(error) = handle_birthday_check_subcommand().await {
-        println!("{:?}", error);
-    }
-}
-
-async fn handle_birthday_check_subcommand() -> Result<(), BotError> {
+async fn check_birthdays(context: &Context) -> Result<(), BotError> {
     // Connect to database
     let database = super::connect_mongodb().await?;
     // Retrieve all collections in database
@@ -38,28 +39,7 @@ async fn handle_birthday_check_subcommand() -> Result<(), BotError> {
         .list_collection_names(None)
         .await?;
     for name in names {
-        let query = bson::doc! {
-            "user": {
-                "$exists": true,
-                "$type": "long",
-            },
-            "birth.day": {
-                "$exists": true,
-                "$type": "int",
-            },
-            "birth.month": {
-                "$exists": true,
-                "$type": "int",
-            },
-            "birth.year": {
-                "$exists": true,
-                "$type": "int",
-            },
-            "birth.offset": {
-                "$exists": true,
-                "$type": "int",
-            },
-        };
+        let query = bson_birthday!();
         // Retrieve all documents in collection
         let collection = database.collection::<Document>(name.as_str());
         let mut documents = collection
@@ -72,10 +52,37 @@ async fn handle_birthday_check_subcommand() -> Result<(), BotError> {
             let birth_date = super::get_birthday(&document)?
                 .with_timezone(&Utc);
             let server_date = Utc::now();
+            // If birthday, announce in channel
             if birth_date.day() == server_date.day() && birth_date.month() == server_date.month() {
-                println!("{} ({}) - {}", user, birth_date, server_date);
+                announce_birthday(user, &collection, context).await?;
             }
         }
+    }
+    Ok(())
+}
+
+async fn announce_birthday(user: i64, collection: &Collection<Document>, context: &Context) -> Result<(), BotError> {
+    // Retrieve channel ID from collection
+    let query = bson::doc! {
+        "config.channel": {
+            "$exists": true,
+            "$type": "long",
+        },
+    };
+    let config = collection
+        .find_one(query, None)
+        .await?;
+    // If channel ID does not exist, no announcement is made
+    if let Some(config) = config {
+        ChannelId(config
+            .get_document("config")?
+            .get_i64("channel")? as u64)
+            .send_message(&context.http, |message| message
+                .embed(|embed| embed
+                    .title("Birthday")
+                    .description(format!("It's <@{}>'s birthday!", user))
+                    .colour(Colour::from_rgb(235, 69, 158))))
+            .await?;
     }
     Ok(())
 }

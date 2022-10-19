@@ -17,6 +17,8 @@ use commands::birthday;
 pub mod errors;
 use errors::BotError;
 
+use crate::commands::birthday::check;
+
 /// An [EventHandler] attached to the bot client.
 pub struct BotEventHandler;
 
@@ -34,6 +36,8 @@ impl EventHandler for BotEventHandler {
         if let Err(error) = commands::set_guild_commands(&context).await {
             println!("{:?}", error);
         }
+
+        check::create_birthday_scheduler(&context);
     }
 
     async fn interaction_create(&self, context: Context, interaction: Interaction) {

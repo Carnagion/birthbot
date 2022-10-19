@@ -55,6 +55,30 @@ macro_rules! require_command_user_option {
 }
 
 macro_rules! bson_birthday {
+    () => {
+        mongodb::bson::doc! {
+            "user": {
+                "$exists": true,
+                "$type": "long",
+            },
+            "birth.day": {
+                "$exists": true,
+                "$type": "int",
+            },
+            "birth.month": {
+                "$exists": true,
+                "$type": "int",
+            },
+            "birth.year": {
+                "$exists": true,
+                "$type": "int",
+            },
+            "birth.offset": {
+                "$exists": true,
+                "$type": "int",
+            },
+        }
+    };
     ($id:expr) => {
         mongodb::bson::doc! {
             "user": $id,

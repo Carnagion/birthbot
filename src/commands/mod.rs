@@ -11,7 +11,6 @@ use serenity::model::id::GuildId;
 use serenity::model::prelude::command::Command;
 
 pub mod birthday;
-use birthday::check;
 
 use crate::errors::BotError;
 
@@ -43,7 +42,6 @@ pub async fn set_guild_commands(context: &Context) -> Result<Vec<Command>, BotEr
 }
 
 fn create_commands(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
-    check::setup_birthday_cron();
     commands
         .create_application_command(birthday::create_birthday_command)
 }
