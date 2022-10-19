@@ -74,15 +74,14 @@ pub async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, comm
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     // Build query and replacement documents
-    let query = bson_birthday!(user.id.to_string());
+    let query = bson_birthday!(user.id.0 as i64);
     let document = bson::doc! {
-        user.id.to_string(): {
-            "birth": {
-                "day": day,
-                "month": month,
-                "year": year,
-                "offset": offset,
-            },
+        "user": user.id.0 as i64,
+        "birth": {
+            "day": day,
+            "month": month,
+            "year": year,
+            "offset": offset,
         },
     };
     // Connect to database and find collection

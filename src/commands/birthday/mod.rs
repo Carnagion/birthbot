@@ -2,8 +2,13 @@
 
 use std::env;
 
+use chrono::DateTime;
+use chrono::FixedOffset;
+use chrono::NaiveDate;
+
 use mongodb::Client;
 use mongodb::Database;
+use mongodb::bson::Document;
 use mongodb::options::ClientOptions;
 use mongodb::options::ResolverConfig;
 
@@ -11,6 +16,7 @@ use serenity::builder::CreateApplicationCommand;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::Context;
 
+pub mod check;
 pub mod get;
 pub mod set;
 
@@ -59,4 +65,18 @@ async fn connect_mongodb() -> Result<Database, BotError> {
     let client = Client::with_options(options)?;
     let database = env::var(DATABASE_KEY)?;
     Ok(client.database(database.as_str()))
+}
+
+fn get_birthday(document: &Document) -> Result<DateTime<FixedOffset>, BotError> {
+    let birth = document.get_document("birth")?;
+    let day = birth.get_i32("day")?;
+    let month = birth.get_i32("month")?;
+    let year = birth.get_i32("year")?;
+    let offset = birth.get_i32("offset")?;
+    let timezone = FixedOffset::east_opt(offset * 60)
+        .ok_or(BotError::CommandError(String::from("The offset stored is invalid.")))?;
+    let naive = NaiveDate::from_ymd_opt(year, month as u32, day as u32)
+        .ok_or(BotError::UserError(String::from("The date provided is invalid.")))?
+        .and_hms(0, 0, 0);
+    Ok(DateTime::<FixedOffset>::from_utc(naive, timezone))
 }

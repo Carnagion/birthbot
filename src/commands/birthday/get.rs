@@ -1,9 +1,5 @@
 //! Generates and handles the `birthday get` sub-command.
 
-use chrono::DateTime;
-use chrono::FixedOffset;
-use chrono::NaiveDate;
-
 use mongodb::bson::Document;
 
 use serenity::builder::CreateApplicationCommandOption;
@@ -42,7 +38,7 @@ pub async fn handle_birthday_get_subcommand(subcommand: &CommandDataOption, comm
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     // Build query document
-    let query = bson_birthday!(user.id.to_string());
+    let query = bson_birthday!(user.id.0 as i64);
     // Connect to database and find collection
     let database = super::connect_mongodb().await?;
     let collection = database.collection::<Document>(guild.to_string().as_str());
@@ -72,19 +68,7 @@ async fn respond_birthday_get(result: Option<Document>, user: &User, command: &A
         },
         // If query returned a document, parse and show the birthday
         Some(document) => {
-            let birthday = document
-                .get_document(user.id.to_string())?
-                .get_document("birth")?;
-            let day = birthday.get_i32("day")?;
-            let month = birthday.get_i32("month")?;
-            let year = birthday.get_i32("year")?;
-            let offset = birthday.get_i32("offset")?;
-            let timezone = FixedOffset::east_opt(offset * 60)
-                .ok_or(BotError::CommandError(String::from("The offset stored is invalid.")))?;
-            let naive = NaiveDate::from_ymd_opt(year, month as u32, day as u32)
-                .ok_or(BotError::UserError(String::from("The date provided is invalid.")))?
-                .and_hms(0, 0, 0);
-            let date = DateTime::<FixedOffset>::from_utc(naive, timezone);
+            let date = super::get_birthday(&document)?;
             let description = if user.id == command.user.id {
                 String::from("Your birthday was successfully retrieved.")
             } else {
