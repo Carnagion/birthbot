@@ -16,6 +16,7 @@ use serenity::builder::CreateApplicationCommand;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::Context;
 
+pub mod announce;
 pub mod check;
 pub mod get;
 pub mod set;
@@ -30,6 +31,7 @@ pub fn create_birthday_command(command: &mut CreateApplicationCommand) -> &mut C
     command
         .name("birthday")
         .description("Get or set a user's birthday.")
+        .create_option(announce::create_birthday_announce_subcommand)
         .create_option(get::create_birthday_get_subcommand)
         .create_option(set::create_birthday_set_subcommand)
 }
@@ -52,6 +54,7 @@ pub async fn handle_birthday_command(command: &ApplicationCommandInteraction, co
         .ok_or(BotError::CommandError(String::from("A sub-command is expected.")))?;
     // Handle sub-command based on name
     match subcommand.name.as_str() {
+        "announce" => announce::handle_birthday_announce_subcommand(subcommand, command, context).await,
         "get" => get::handle_birthday_get_subcommand(subcommand, command, context).await,
         "set" => set::handle_birthday_set_subcommand(subcommand, command, context).await,
         subcommand_name => Err(BotError::CommandError(format!("The sub-command {} is not recognised.", subcommand_name))),
