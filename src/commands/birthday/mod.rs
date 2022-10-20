@@ -20,6 +20,7 @@ pub mod announce;
 pub mod check;
 pub mod get;
 pub mod set;
+pub mod unannounce;
 
 use crate::errors::BotError;
 
@@ -34,6 +35,7 @@ pub fn create_birthday_command(command: &mut CreateApplicationCommand) -> &mut C
         .create_option(announce::create_birthday_announce_subcommand)
         .create_option(get::create_birthday_get_subcommand)
         .create_option(set::create_birthday_set_subcommand)
+        .create_option(unannounce::create_birthday_unannounce_subcommand)
 }
 
 /// Handles the `birthday` command and its subcommands.
@@ -57,6 +59,7 @@ pub async fn handle_birthday_command(command: &ApplicationCommandInteraction, co
         "announce" => announce::handle_birthday_announce_subcommand(subcommand, command, context).await,
         "get" => get::handle_birthday_get_subcommand(subcommand, command, context).await,
         "set" => set::handle_birthday_set_subcommand(subcommand, command, context).await,
+        "unannounce" => unannounce::handle_birthday_announce_subcommand(command, context).await,
         subcommand_name => Err(BotError::CommandError(format!("The sub-command {} is not recognised.", subcommand_name))),
     }
 }
