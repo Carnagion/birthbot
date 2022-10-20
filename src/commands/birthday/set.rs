@@ -11,7 +11,6 @@ use serenity::builder::CreateApplicationCommandOption;
 use serenity::model::application::command::CommandOptionType;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::application_command::CommandDataOption;
-use serenity::model::user::User;
 use serenity::prelude::Context;
 use serenity::utils::Colour;
 
@@ -70,11 +69,10 @@ pub async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, comm
         .ok_or(BotError::UserError(String::from("The date provided is invalid.")))?
         .and_hms(0, 0, 0);
     let date = DateTime::<FixedOffset>::from_utc(naive, timezone);
-    let user = require_command_user_option!(subcommand.options.get(4), "user", &command.user);
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     // Build query and operation documents
-    let query = bson_birthday!(user.id.0 as i64);
+    let query = bson_birthday!(command.user.id.0 as i64);
     let operation = bson::doc! {
         "$set": {
             "birth.day": day,
@@ -93,7 +91,7 @@ pub async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, comm
     match replacement {
         None => {
             let insertion = bson::doc! {
-                "user": user.id.0 as i64,
+                "user": command.user.id.0 as i64,
                 "birth": {
                     "day": day,
                     "month": month,
@@ -104,23 +102,18 @@ pub async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, comm
             collection
                 .insert_one(insertion, None)
                 .await?;
-            respond_birthday_set(&date, "added", user, command, context).await
+            respond_birthday_set(&date, "added", command, context).await
         },
-        Some(_) => respond_birthday_set(&date, "updated", user, command, context).await,
+        Some(_) => respond_birthday_set(&date, "updated", command, context).await,
     }
 }
 
-async fn respond_birthday_set(date: &DateTime<FixedOffset>, action: impl Into<String>, user: &User, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
-    let description = if user.id == command.user.id {
-        format!("Your birthday was successfully {}.", action.into())
-    } else {
-        format!("<@{}>'s birthday was successfully {}.", user.id, action.into())
-    };
+async fn respond_birthday_set(date: &DateTime<FixedOffset>, action: impl Into<String>, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
     command_response!(command, context, |data| data
         .ephemeral(true)
         .embed(|embed| embed
             .title("Success")
-            .description(description)
+            .description(format!("Your birthday was successfully {}.", action.into()))
             .field("Birthday", date.date(), true)
             .colour(Colour::from_rgb(87, 242, 135))))
 }
