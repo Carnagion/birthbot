@@ -75,13 +75,12 @@ pub async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, comm
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     // Build query and replacement documents
     let query = bson_birthday!(user.id.0 as i64);
-    let document = bson::doc! {
-        "user": user.id.0 as i64,
-        "birth": {
-            "day": day,
-            "month": month,
-            "year": year,
-            "offset": offset,
+    let operation = bson::doc! {
+        "$set": {
+            "birth.day": day,
+            "birth.month": month,
+            "birth.year": year,
+            "birth.offset": offset,
         },
     };
     // Connect to database and find collection
@@ -89,14 +88,23 @@ pub async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, comm
     let collection = database.collection::<Document>(guild.to_string().as_str());
     // Insert or replace document
     let replacement = collection
-        .find_one_and_replace(query, &document, None)
+        .find_one_and_update(query, operation, None)
         .await?;
     match replacement {
         None => {
+            let insertion = bson::doc! {
+                "user": user.id.0 as i64,
+                "birth": {
+                    "day": day,
+                    "month": month,
+                    "year": year,
+                    "offset": offset,
+                },
+            };
             collection
-                .insert_one(&document, None)
+                .insert_one(insertion, None)
                 .await?;
-            respond_birthday_set(&date, "set", user, command, context).await
+            respond_birthday_set(&date, "added", user, command, context).await
         },
         Some(_) => respond_birthday_set(&date, "updated", user, command, context).await,
     }
