@@ -17,7 +17,7 @@ pub fn create_birthday_get_subcommand(subcommand: &mut CreateApplicationCommandO
     subcommand
         .kind(CommandOptionType::SubCommand)
         .name("get")
-        .description("Gets a birthday.")
+        .description("Retrieve a user's birthday.")
         .create_sub_option(|option| option
             .kind(CommandOptionType::User)
             .name("user")

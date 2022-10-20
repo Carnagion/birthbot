@@ -22,7 +22,7 @@ pub fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandO
     subcommand
         .kind(CommandOptionType::SubCommand)
         .name("set")
-        .description("Sets a birthday.")
+        .description("Add or update a user's birthday.")
         .create_sub_option(|option| option
             .kind(CommandOptionType::Integer)
             .name("day")
