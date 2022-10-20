@@ -60,7 +60,7 @@ pub async fn handle_birthday_command(command: &ApplicationCommandInteraction, co
     match subcommand.name.as_str() {
         "get" => get::handle_birthday_get_subcommand(subcommand, command, context).await,
         "set" => set::handle_birthday_set_subcommand(subcommand, command, context).await,
-        "unset" => unset::handle_birthday_unset_subcommand(subcommand, command, context).await,
+        "unset" => unset::handle_birthday_unset_subcommand(command, context).await,
         "announce" => announce::handle_birthday_announce_subcommand(subcommand, command, context).await,
         "unannounce" => unannounce::handle_birthday_announce_subcommand(command, context).await,
         subcommand_name => Err(BotError::CommandError(format!("The sub-command {} is not recognised.", subcommand_name))),

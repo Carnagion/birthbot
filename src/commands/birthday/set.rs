@@ -42,11 +42,6 @@ pub fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandO
             .name("offset")
             .description("Offset from UTC in minutes")
             .required(true))
-        .create_sub_option(|option| option
-            .kind(CommandOptionType::User)
-            .name("user")
-            .description("Whose birthday to set")
-            .required(false))
 }
 
 /// Handles the `birthday set` sub-command.
