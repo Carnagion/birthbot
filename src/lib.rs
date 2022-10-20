@@ -13,11 +13,10 @@ mod macros;
 
 pub mod commands;
 use commands::birthday;
+use commands::birthday::check;
 
 pub mod errors;
 use errors::BotError;
-
-use crate::commands::birthday::check;
 
 /// An [EventHandler] attached to the bot client.
 pub struct BotEventHandler;
