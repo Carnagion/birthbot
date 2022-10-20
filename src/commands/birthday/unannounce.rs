@@ -25,7 +25,7 @@ pub fn create_birthday_unannounce_subcommand(subcommand: &mut CreateApplicationC
 /// A [BotError] is returned in situations including but not limited to:
 /// - There was an error connecting to, querying, or updating the database
 /// - There was an error responding to the command
-pub async fn handle_birthday_announce_subcommand(command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
+pub async fn handle_birthday_unannounce_subcommand(command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     // Build query and operation documents
