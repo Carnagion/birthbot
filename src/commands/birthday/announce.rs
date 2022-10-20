@@ -18,7 +18,7 @@ pub fn create_birthday_announce_subcommand(subcommand: &mut CreateApplicationCom
     subcommand
         .kind(CommandOptionType::SubCommand)
         .name("announce")
-        .description("Add or update a channel for announcing birthdays.")
+        .description("Add or update the channel for announcing birthdays.")
         .create_sub_option(|option| option
             .kind(CommandOptionType::Channel)
             .name("channel")
@@ -38,31 +38,31 @@ pub async fn handle_birthday_announce_subcommand(subcommand: &CommandDataOption,
     let channel = require_command_channel_option!(subcommand.options.get(0), "channel")?;
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
-    // Build query and replacement documents
+    // Build query and operation documents
     let query = bson::doc! {
-        "config.channel": {
+        "config": {
             "$exists": true,
-            "$type": "long",
+            "$type": "object",
         },
     };
-    let document = bson::doc! {
-        "config": {
-            "channel": channel.id.0 as i64,
+    let operation = bson::doc! {
+        "$set": {
+            "config.channel": channel.id.0 as i64,
         },
     };
     // Connect to database and find collection
     let database = super::connect_mongodb().await?;
     let collection = database.collection::<Document>(guild.to_string().as_str());
-    // Insert or replace document
-    let replacement = collection
-        .find_one_and_replace(query, &document, None)
+    // Update or insert document
+    let result = collection
+        .find_one_and_update(query, &operation, None)
         .await?;
-    match replacement {
+    match result {
         None => {
             collection
-                .insert_one(&document, None)
+                .insert_one(&operation, None)
                 .await?;
-            respond_birthday_announce(channel, "set", command, context).await
+            respond_birthday_announce(channel, "added", command, context).await
         },
         Some(_) => respond_birthday_announce(channel, "updated", command, context).await,
     }
@@ -72,7 +72,7 @@ async fn respond_birthday_announce(channel: &PartialChannel, action: impl Into<S
     command_response!(command, context, |data| data
         .embed(|embed| embed
             .title("Success")
-            .description(format!("The channel was successfully {}.", action.into()))
+            .description(format!("The birthday announcement channel was successfully {}.", action.into()))
             .field("Channel", format!("<#{}>", channel.id), true)
             .colour(Colour::from_rgb(87, 242, 135))))
 }
