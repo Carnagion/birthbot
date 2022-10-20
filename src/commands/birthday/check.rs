@@ -31,9 +31,8 @@ pub fn create_birthday_scheduler(context: &Context) {
 
 async fn loop_checks(context: &Context) -> Result<(), BotError> {
     loop {
-        let interval = env::var("INTERVAL")?.parse()?;
         check_birthdays(context).await?;
-        time::sleep(Duration::from_secs(interval)).await;
+        time::sleep(Duration::from_secs(86400)).await;
     }
 }
 
