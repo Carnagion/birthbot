@@ -73,7 +73,7 @@ pub async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, comm
     let user = require_command_user_option!(subcommand.options.get(4), "user", &command.user);
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
-    // Build query and replacement documents
+    // Build query and operation documents
     let query = bson_birthday!(user.id.0 as i64);
     let operation = bson::doc! {
         "$set": {
