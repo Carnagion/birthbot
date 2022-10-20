@@ -28,13 +28,13 @@ impl EventHandler for BotEventHandler {
         #[cfg(not(feature = "guild"))]
         // Set commands globally
         if let Err(error) = commands::set_global_commands(&context).await {
-            println!("{:?}", error);
+            eprintln!("{:?}", error);
         }
 
         #[cfg(feature = "guild")]
         // Set commands for a specific guild
         if let Err(error) = commands::set_guild_commands(&context).await {
-            println!("{:?}", error);
+            eprintln!("{:?}", error);
         }
 
         check::create_birthday_scheduler(&context);
@@ -49,7 +49,7 @@ impl EventHandler for BotEventHandler {
             };
             // If the error is a user error, use a specific error message, else use a very general error message
             if let Err(bot_error) = result {
-                println!("{:?}", bot_error);
+                eprintln!("{:?}", bot_error);
                 match bot_error {
                     BotError::UserError(user_error) => command_error!(user_error, &command, &context),
                     _ => command_error!("An unexpected error occurred while processing that command.", &command, &context),
