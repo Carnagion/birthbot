@@ -1,4 +1,4 @@
-//! Generates and executes the `cron` task for checking birthdays.
+//! Generates and executes the asynchronous task for checking birthdays.
 
 use std::time::Duration;
 
