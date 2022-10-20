@@ -23,9 +23,7 @@ const GUILD_KEY: &str = "GUILD";
 /// # Errors
 /// A [BotError] is returned if there are any Serenity API errors while setting the commands.
 pub async fn set_global_commands(context: &Context) -> Result<Vec<Command>, BotError> {
-    Command::set_global_application_commands(&context.http, &create_commands)
-        .await
-        .map_err(BotError::SerenityError)
+    Ok(Command::set_global_application_commands(&context.http, &create_commands).await?)
 }
 
 #[cfg(feature = "guild")]
