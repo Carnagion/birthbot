@@ -1,5 +1,6 @@
 //! Generates and executes the `cron` task for checking birthdays.
 
+use std::env;
 use std::time::Duration;
 
 use chrono::Datelike;
@@ -22,13 +23,18 @@ use crate::errors::BotError;
 pub fn create_birthday_scheduler(context: &Context) {
     let cloned = context.clone();
     tokio::spawn(async move {
-        loop {
-            if let Err(error) = check_birthdays(&cloned).await {
-                println!("{:?}", error);
-            }
-            time::sleep(Duration::from_secs(86400)).await;
+        if let Err(error) = loop_checks(&cloned).await {
+            eprintln!("{:?}", error);
         }
     });
+}
+
+async fn loop_checks(context: &Context) -> Result<(), BotError> {
+    loop {
+        let interval = env::var("INTERVAL")?.parse()?;
+        check_birthdays(context).await?;
+        time::sleep(Duration::from_secs(interval)).await;
+    }
 }
 
 async fn check_birthdays(context: &Context) -> Result<(), BotError> {
@@ -54,14 +60,17 @@ async fn check_birthdays(context: &Context) -> Result<(), BotError> {
             let server_date = Utc::now();
             // If birthday, announce in channel
             if birth_date.day() == server_date.day() && birth_date.month() == server_date.month() {
-                announce_birthday(user, &collection, context).await?;
+                let age = server_date.year() - document
+                    .get_document("birth")?
+                    .get_i32("year")?;
+                announce_birthday(user, age, &collection, context).await?;
             }
         }
     }
     Ok(())
 }
 
-async fn announce_birthday(user: i64, collection: &Collection<Document>, context: &Context) -> Result<(), BotError> {
+async fn announce_birthday(user: i64, age: i32, collection: &Collection<Document>, context: &Context) -> Result<(), BotError> {
     // Retrieve channel ID from collection
     let query = bson::doc! {
         "config.channel": {
@@ -81,6 +90,7 @@ async fn announce_birthday(user: i64, collection: &Collection<Document>, context
                 .embed(|embed| embed
                     .title("Birthday")
                     .description(format!("It's <@{}>'s birthday!", user))
+                    .field("Age", age, true)
                     .colour(Colour::from_rgb(235, 69, 158))))
             .await?;
     }
