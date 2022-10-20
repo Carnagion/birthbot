@@ -1,6 +1,5 @@
 //! Generates and executes the `cron` task for checking birthdays.
 
-use std::env;
 use std::time::Duration;
 
 use chrono::Datelike;
