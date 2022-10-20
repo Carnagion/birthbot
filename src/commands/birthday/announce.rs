@@ -55,12 +55,17 @@ pub async fn handle_birthday_announce_subcommand(subcommand: &CommandDataOption,
     let collection = database.collection::<Document>(guild.to_string().as_str());
     // Update or insert document
     let result = collection
-        .find_one_and_update(query, &operation, None)
+        .find_one_and_update(query, operation, None)
         .await?;
     match result {
         None => {
+            let insertion = bson::doc! {
+                "config": {
+                    "channel": channel.id.0 as i64,
+                },
+            };
             collection
-                .insert_one(&operation, None)
+                .insert_one(insertion, None)
                 .await?;
             respond_birthday_announce(channel, "added", command, context).await
         },
