@@ -34,9 +34,9 @@ pub fn create_birthday_command(command: &mut CreateApplicationCommand) -> &mut C
         .name("birthday")
         .description("Get or set a user's birthday.")
         .create_option(announce::create_birthday_announce_subcommand)
+        .create_option(unannounce::create_birthday_unannounce_subcommand)
         .create_option(get::create_birthday_get_subcommand)
         .create_option(set::create_birthday_set_subcommand)
-        .create_option(unannounce::create_birthday_unannounce_subcommand)
         .create_option(unset::create_birthday_unset_subcommand)
 }
 
