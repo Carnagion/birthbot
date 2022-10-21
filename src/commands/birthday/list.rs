@@ -1,7 +1,5 @@
 //! Generates and handles the `birthday list` sub-command.
 
-use mongodb::bson::Document;
-
 use serenity::builder::CreateApplicationCommandOption;
 use serenity::model::application::command::CommandOptionType;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
@@ -36,37 +34,26 @@ pub async fn handle_birthday_list_subcommand(subcommand: &CommandDataOption, com
     let sorted = *require_command_simple_option!(subcommand.options.get(0), Boolean, "sorted", true)?;
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
-    // Build query document
-    let query = bson_birthday!();
-    // Connect to database and retrieve all documents
-    let mut cursor = super::connect_mongodb()
-        .await?
-        .collection::<Document>(guild.to_string().as_str())
-        .find(query, None)
-        .await?;
-    // Store all birthdays in memory
-    let mut birthdays = vec![];
-    while cursor.advance().await? {
-        let document = cursor.deserialize_current()?;
-        let user = document.get_i64("user")?;
-        let birth = super::get_birthday(&document)?;
-        birthdays.push((user, birth));
-    }
-    // Sort birthdays if necessary
-    if sorted {
-        birthdays.sort_by(|(_, left), (_, right)| left.cmp(right));
-    }
+    let mut birthdays = super::get_all_birthdays(guild).await?;
     // Create embed response
-    command_response!(command, context, |data| data
+    if birthdays.is_empty() {
+        command_error!("There are no birthdays to list.", command, context)
+    } else {
+        command_response!(command, context, |data| data
         .ephemeral(true)
         .embed(|embed| {
             embed
                 .title("Success")
                 .description("All birthdays were successfully retrieved.")
                 .colour(Colour::from_rgb(87, 242, 135));
+            // Sort birthdays if necessary
+            if sorted {
+                birthdays.sort_by(|(_, left), (_, right)| left.cmp(right));
+            }
             for (user, birth) in birthdays {
                 embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true);
             }
             embed
         }))
+    }
 }
