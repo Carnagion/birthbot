@@ -59,12 +59,7 @@ async fn respond_birthday_get(result: Option<Document>, user: &User, command: &A
             } else {
                 format!("<@{}> hasn't set a birthday yet.", user.id)
             };
-            command_response!(command, context, |data| data
-                .ephemeral(true)
-                .embed(|embed| embed
-                    .title("Error")
-                    .description(description)
-                    .colour(Colour::from_rgb(237, 66, 69))))
+            command_error!(description, command, context)
         },
         // If query returned a document, parse and show the birthday
         Some(document) => {

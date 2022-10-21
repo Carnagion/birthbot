@@ -16,8 +16,6 @@ macro_rules! command_error {
                     .title("Error")
                     .description($description)
                     .colour(serenity::utils::Colour::from_rgb(237, 66, 69))))
-            .map_err(|error| println!("{:?}", error))
-            .map_or((), |_| ())
     };
 }
 
