@@ -52,7 +52,7 @@ impl EventHandler for BotEventHandler {
                 match bot_error {
                     BotError::UserError(user_error) => command_error!(user_error, &command, &context),
                     _ => command_error!("An unexpected error occurred while processing that command.", &command, &context),
-                }.map_err(|error| println!("{:?}", error))
+                }.map_err(|error| eprintln!("{:?}", error))
                 .map_or((), |_| ())
             }
         }
