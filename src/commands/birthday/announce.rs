@@ -7,6 +7,7 @@ use serenity::builder::CreateApplicationCommandOption;
 use serenity::model::application::command::CommandOptionType;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::application_command::CommandDataOption;
+use serenity::model::channel::ChannelType;
 use serenity::model::channel::PartialChannel;
 use serenity::prelude::Context;
 use serenity::utils::Colour;
@@ -23,7 +24,8 @@ pub fn create_birthday_announce_subcommand(subcommand: &mut CreateApplicationCom
             .kind(CommandOptionType::Channel)
             .name("channel")
             .description("The channel for birthday announcements")
-            .required(true))
+            .required(true)
+            .channel_types(&[ChannelType::Text, ChannelType::Private, ChannelType::PublicThread, ChannelType::PrivateThread]))
 }
 
 /// Handles the `birthday announce` sub-command.
