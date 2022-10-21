@@ -26,12 +26,16 @@ pub fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandO
             .kind(CommandOptionType::Integer)
             .name("day")
             .description("Day of birth")
-            .required(true))
+            .required(true)
+            .min_int_value(0)
+            .max_int_value(31))
         .create_sub_option(|option| option
             .kind(CommandOptionType::Integer)
             .name("month")
             .description("Month of birth")
-            .required(true))
+            .required(true)
+            .min_int_value(1)
+            .max_int_value(12))
         .create_sub_option(|option| option
             .kind(CommandOptionType::Integer)
             .name("year")
@@ -41,7 +45,9 @@ pub fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandO
             .kind(CommandOptionType::Integer)
             .name("offset")
             .description("Offset from UTC in minutes")
-            .required(true))
+            .required(true)
+            .min_int_value(-1439)
+            .max_int_value(1439))
 }
 
 /// Handles the `birthday set` sub-command.
