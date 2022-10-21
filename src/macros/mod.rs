@@ -38,6 +38,12 @@ macro_rules! require_command_simple_option {
             _ => Err(crate::errors::BotError::CommandError(format!(r#"The resolved value for the option "{}" is invalid."#, $name))),
         }
     };
+    ($option:expr, $kind:ident, $name:expr, $default:expr) => {
+        match $option.map_or_else(|| Ok(&serenity::model::application::interaction::application_command::CommandDataOptionValue::$kind($default)), |option| resolve_command_option!(option, $kind, $name))? {
+            serenity::model::application::interaction::application_command::CommandDataOptionValue::$kind(value) => Ok(value),
+            _ => Err(crate::errors::BotError::CommandError(format!(r#"The resolved value for the option "{}" is invalid."#, $name))),
+        }
+    };
 }
 
 macro_rules! require_command_user_option {
