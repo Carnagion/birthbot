@@ -44,6 +44,7 @@ pub async fn handle_birthday_list_subcommand(subcommand: &CommandDataOption, com
         .collection::<Document>(guild.to_string().as_str())
         .find(query, None)
         .await?;
+    // Store all birthdays in memory
     let mut birthdays = vec![];
     while cursor.advance().await? {
         let document = cursor.deserialize_current()?;
@@ -51,9 +52,11 @@ pub async fn handle_birthday_list_subcommand(subcommand: &CommandDataOption, com
         let birth = super::get_birthday(&document)?;
         birthdays.push((user, birth));
     }
+    // Sort birthdays if necessary
     if sorted {
         birthdays.sort_by(|(_, left), (_, right)| left.cmp(right));
     }
+    // Create embed response
     command_response!(command, context, |data| data
         .ephemeral(true)
         .embed(|embed| {
