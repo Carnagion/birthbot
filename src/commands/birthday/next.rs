@@ -1,9 +1,12 @@
 //! Generates and handles the `birthday next` sub-command.
 
 use chrono::Datelike;
+use chrono::DateTime;
+use chrono::FixedOffset;
 use chrono::Utc;
 
 use serenity::builder::CreateApplicationCommandOption;
+use serenity::builder::CreateEmbed;
 use serenity::model::application::command::CommandOptionType;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::application_command::CommandDataOption;
@@ -22,7 +25,8 @@ pub fn create_birthday_next_subcommand(subcommmand: &mut CreateApplicationComman
             .kind(CommandOptionType::Integer)
             .name("times")
             .description("How many incoming birthdays to retrieve")
-            .required(false))
+            .required(false)
+            .min_int_value(1))
 }
 
 /// Handles the `birthday list` sub-command.
@@ -37,51 +41,47 @@ pub async fn handle_birthday_next_subcommand(subcommand: &CommandDataOption, com
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     // Retrieve and sort birthdays
-    let birthdays = super::get_all_birthdays(guild).await?;
-    match birthdays.get(0) {
-        // If vector is empty, there are no birthdays
-        None => command_error!("There are no birthdays to list.", command, context),
-        // If vector has elements, find next birthdays
-        Some(oldest) => {
-            if times > birthdays.len() {
-                command_error!("Cannot retrieve more incoming birthdays than the total number of birthdays.", command, context)
-            } else {
-                // Filter the birthdays that come after the current date using the oldest year as the base year
-                let base = Utc::now()
-                    .with_year(oldest.1
-                        .with_timezone(&Utc)
-                        .year())
-                    .unwrap();
-                let after = birthdays
-                    .iter()
-                    .filter(|(_, birthday)| birthday.with_timezone(&Utc) >= base)
-                    .take(times);
-                // Different description for one birthday vs many birthdays
-                let description = if times == 1 {
-                    String::from("The next birthday was successfully retrieved.")
-                } else {
-                    format!("The next {} birthdays were successfully retrieved.", times)
-                };
-                // Respond to command
-                command_response!(command, context, |data| data
-                .ephemeral(true)
-                .embed(|embed| {
-                    embed
-                        .title("Success")
-                        .description(description)
-                        .colour(Colour::from_rgb(87, 242, 135));
-                    let mut taken = 0;
-                    for (user, birth) in after {
-                        embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true);
-                        taken += 1;
-                    }
-                    if taken < times {
-                        for (user, birth) in birthdays.iter().take(times - taken) {
-                            embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true);
-                        }
-                    }
-                    embed}))
-            }
-        },
+    let mut birthdays = super::get_all_birthdays(guild).await?;
+    birthdays.sort_by(|(_, left), (_, right)| left.cmp(right));
+    match birthdays.len() {
+        0 => command_error!("There are no birthdays to list.", command, context),
+        _ => command_response!(command, context, |data| data
+            .ephemeral(true)
+            .embed(|embed| birthday_next_embed(embed, &mut birthdays, times))),
     }
+}
+
+fn birthday_next_embed<'a>(embed: &'a mut CreateEmbed, birthdays: &mut Vec<(i64, DateTime<FixedOffset>)>, times: usize) -> &'a mut CreateEmbed {
+    let description = if times == 1 {
+        String::from("The next birthday was successfully retrieved.")
+    } else {
+        format!("The next {} birthdays were successfully retrieved.", times)
+    };
+    embed
+        .title("Success")
+        .description(description)
+        .colour(Colour::from_rgb(87, 242, 135));
+    // Find index of first birthday that comes after current day
+    let now = Utc::now();
+    let index = birthdays
+        .iter()
+        .map(|(user, birth)| (user, birth
+            .with_timezone(&Utc)
+            .with_year(now.year())
+            .unwrap()))
+        .position(|(_, birth)| birth > now);
+    let advancement = match index {
+        None => 0,
+        Some(index) => index + 1,
+    };
+    // Make an infinite iterator and take the required amount
+    let next = birthdays
+        .iter()
+        .cycle()
+        .skip(advancement)
+        .take(times);
+    for (user, birth) in next {
+        embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true);
+    }
+    embed
 }

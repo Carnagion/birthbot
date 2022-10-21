@@ -1,6 +1,10 @@
 //! Generates and handles the `birthday list` sub-command.
 
+use chrono::DateTime;
+use chrono::FixedOffset;
+
 use serenity::builder::CreateApplicationCommandOption;
+use serenity::builder::CreateEmbed;
 use serenity::model::application::command::CommandOptionType;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::application_command::CommandDataOption;
@@ -36,24 +40,25 @@ pub async fn handle_birthday_list_subcommand(subcommand: &CommandDataOption, com
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     let mut birthdays = super::get_all_birthdays(guild).await?;
     // Create embed response
-    if birthdays.is_empty() {
-        command_error!("There are no birthdays to list.", command, context)
-    } else {
-        command_response!(command, context, |data| data
-        .ephemeral(true)
-        .embed(|embed| {
-            embed
-                .title("Success")
-                .description("All birthdays were successfully retrieved.")
-                .colour(Colour::from_rgb(87, 242, 135));
-            // Sort birthdays if necessary
-            if sorted {
-                birthdays.sort_by(|(_, left), (_, right)| left.cmp(right));
-            }
-            for (user, birth) in birthdays {
-                embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true);
-            }
-            embed
-        }))
+    match birthdays.len() {
+        0 => command_error!("There are no birthdays to list.", command, context),
+        _ => command_response!(command, context, |data| data
+                .ephemeral(true)
+                .embed(|embed| birthday_list_embed(embed, &mut birthdays, sorted))),
     }
+}
+
+fn birthday_list_embed<'a>(embed: &'a mut CreateEmbed, birthdays: &mut Vec<(i64, DateTime<FixedOffset>)>, sorted: bool) -> &'a mut CreateEmbed {
+    embed
+        .title("Success")
+        .description("All birthdays were successfully retrieved.")
+        .colour(Colour::from_rgb(87, 242, 135));
+    // Sort birthdays if necessary
+    if sorted {
+        birthdays.sort_by(|(_, left), (_, right)| left.cmp(right));
+    }
+    for (user, birth) in birthdays {
+        embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true);
+    }
+    embed
 }
