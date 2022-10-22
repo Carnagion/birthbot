@@ -1,8 +1,30 @@
 # Birthbot
 
-**Birthbot** is a Discord bot for keeping track of birthdays.
+**[Birthbot](https://discord.com/api/oauth2/authorize?client_id=1031249634020044860&permissions=2147485696&scope=bot%20applications.commands)** is a Discord bot for keeping track of birthdays.
+
+# Features
+
+- ## Commands
+
+  **Birthbot** recognises the following slash commands:
+  - `birthday get` to retrieve a user's birthday
+  - `birthday set` to add or update the command user's birthday
+  - `birthday unset` to remove the command user's birthday
+  - `birthday announce` to add or update the channel used for birthday announcements
+  - `birthday unannounce` to remove the channel used for birthday announcements
+  - `birthday list` to list all birthdays
+  - `birthday next` to list any upcoming birthdays
+
+- ## Announcements
+
+  Every 24 hours beginning from its startup time, **Birthbot** checks its database for any ongoing birthdays, taking timezones into account.
+
+  If any matches are found, they are announced in the channel as specified by `birthday announce`.
+  If no announcement channel is set up, the birthdays are ignored.
 
 # Setup
+
+To host a separate instance of **Birthbot**, the following setup is required:
 
 - ## Environment
 
@@ -18,24 +40,6 @@
 
   **Birthbot** stores all its data on a MongoDB database as specified by the `.env` file.
   Separate collections are used for each guild, in which separate documents are used to store each user's birthday.
-
-# Features
-
-- ## Commands
-
-  **Birthbot** recognises the following slash commands:
-    - `birthday get` to retrieve a user's birthday
-    - `birthday set` to add or update the command user's birthday
-    - `birthday unset` to remove the command user's birthday
-    - `birthday announce` to add or update the channel used for birthday announcements
-    - `birthday unannounce` to remove the channel used for birthday announcements
-
-- ## Announcements
-
-  Every 24 hours beginning from its startup time, **Birthbot** checks its database for any ongoing birthdays, taking timezones into account.
-
-  If any matches are found, they are announced in the channel as specified by `birthday announce`.
-  If no announcement channel is set up, the birthdays are ignored.
 
 # Errors
 
