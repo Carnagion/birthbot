@@ -27,7 +27,7 @@ pub fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandO
             .name("day")
             .description("Day of birth")
             .required(true)
-            .min_int_value(0)
+            .min_int_value(1)
             .max_int_value(31))
         .create_sub_option(|option| option
             .kind(CommandOptionType::Integer)
