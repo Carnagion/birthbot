@@ -26,7 +26,8 @@ pub fn create_birthday_next_subcommand(subcommmand: &mut CreateApplicationComman
             .name("times")
             .description("How many incoming birthdays to retrieve")
             .required(false)
-            .min_int_value(1))
+            .min_int_value(1)
+            .max_int_value(25)) // Discord embeds do not display more than 25 fields
 }
 
 /// Handles the `birthday list` sub-command.
