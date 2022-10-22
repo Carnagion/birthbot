@@ -41,9 +41,7 @@ pub async fn handle_birthday_next_subcommand(subcommand: &CommandDataOption, com
     let times = *require_command_simple_option!(subcommand.options.get(0), Integer, "times", 1)? as usize;
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
-    // Retrieve and sort birthdays
     let mut birthdays = super::get_all_birthdays(guild).await?;
-    birthdays.sort_by(|(_, left), (_, right)| left.cmp(right));
     match birthdays.len() {
         0 => command_error!("There are no birthdays to list.", command, context),
         _ => command_response!(command, context, |data| data
@@ -62,19 +60,23 @@ fn birthday_next_embed<'a>(embed: &'a mut CreateEmbed, birthdays: &mut Vec<(i64,
         .title("Success")
         .description(description)
         .colour(Colour::from_rgb(87, 242, 135));
-    // Find index of first birthday that comes after current day
     let now = Utc::now();
-    let index = birthdays
+    // Sort birthdays using current year
+    birthdays.sort_unstable_by(|(_, left), (_, right)| left
+        .with_year(now.year())
+        .unwrap()
+        .cmp(&right
+            .with_year(now.year())
+            .unwrap()));
+    // Find index of first birthday that comes after current day
+    let advancement = birthdays
         .iter()
         .map(|(user, birth)| (user, birth
             .with_timezone(&Utc)
             .with_year(now.year())
             .unwrap()))
-        .position(|(_, birth)| birth > now);
-    let advancement = match index {
-        None => 0,
-        Some(index) => index + 1,
-    };
+        .position(|(_, birth)| birth > now)
+        .unwrap_or(0);
     // Make an infinite iterator and take the required amount
     birthdays
         .iter()
