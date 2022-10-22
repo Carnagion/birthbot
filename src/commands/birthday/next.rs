@@ -76,13 +76,10 @@ fn birthday_next_embed<'a>(embed: &'a mut CreateEmbed, birthdays: &mut Vec<(i64,
         Some(index) => index + 1,
     };
     // Make an infinite iterator and take the required amount
-    let next = birthdays
+    birthdays
         .iter()
         .cycle()
         .skip(advancement)
-        .take(times);
-    for (user, birth) in next {
-        embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true);
-    }
-    embed
+        .take(times)
+        .fold(embed, |embed, (user, birth)| embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true))
 }

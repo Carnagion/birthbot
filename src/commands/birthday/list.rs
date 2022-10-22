@@ -57,8 +57,7 @@ fn birthday_list_embed<'a>(embed: &'a mut CreateEmbed, birthdays: &mut Vec<(i64,
     if sorted {
         birthdays.sort_by(|(_, left), (_, right)| left.cmp(right));
     }
-    for (user, birth) in birthdays {
-        embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true);
-    }
-    embed
+    birthdays
+        .iter()
+        .fold(embed, |embed, (user, birth)| embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true))
 }
