@@ -16,8 +16,6 @@ macro_rules! command_error {
                     .title("Error")
                     .description($description)
                     .colour(serenity::utils::Colour::from_rgb(237, 66, 69))))
-            .map_err(|error| println!("{:?}", error))
-            .map_or((), |_| ())
     };
 }
 
@@ -33,10 +31,16 @@ macro_rules! resolve_command_option {
     };
 }
 
-macro_rules! require_command_int_option {
-    ($option:expr, $name:expr) => {
-        match $option.map_or_else(|| Err(crate::errors::BotError::CommandError(format!(r#"The option "{}" is expected."#, $name))), |option_int| resolve_command_option!(option_int, Integer, $name))? {
-            serenity::model::application::interaction::application_command::CommandDataOptionValue::Integer(int) => Ok(int),
+macro_rules! require_command_simple_option {
+    ($option:expr, $kind:ident, $name:expr) => {
+        match $option.map_or_else(|| Err(crate::errors::BotError::CommandError(format!(r#"The option "{}" is expected."#, $name))), |option| resolve_command_option!(option, $kind, $name))? {
+            serenity::model::application::interaction::application_command::CommandDataOptionValue::$kind(value) => Ok(value),
+            _ => Err(crate::errors::BotError::CommandError(format!(r#"The resolved value for the option "{}" is invalid."#, $name))),
+        }
+    };
+    ($option:expr, $kind:ident, $name:expr, $default:expr) => {
+        match $option.map_or_else(|| Ok(&serenity::model::application::interaction::application_command::CommandDataOptionValue::$kind($default)), |option| resolve_command_option!(option, $kind, $name))? {
+            serenity::model::application::interaction::application_command::CommandDataOptionValue::$kind(value) => Ok(value),
             _ => Err(crate::errors::BotError::CommandError(format!(r#"The resolved value for the option "{}" is invalid."#, $name))),
         }
     };
@@ -50,15 +54,6 @@ macro_rules! require_command_user_option {
                 serenity::model::application::interaction::application_command::CommandDataOptionValue::User(user, _) => Ok(user),
                 _ => Err(crate::errors::BotError::CommandError(format!(r#"The resolved value for the option "{}" is invalid."#, $name))),
             }?,
-        }
-    };
-}
-
-macro_rules! require_command_channel_option {
-    ($option:expr, $name:expr) => {
-        match $option.map_or_else(|| Err(crate::errors::BotError::CommandError(format!(r#"The option "{}" is expected."#, $name))), |option_channel| resolve_command_option!(option_channel, Channel, $name))? {
-            serenity::model::application::interaction::application_command::CommandDataOptionValue::Channel(channel) => Ok(channel),
-            _ => Err(crate::errors::BotError::CommandError(format!(r#"The resolved value for the option "{}" is invalid."#, $name))),
         }
     };
 }

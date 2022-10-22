@@ -14,11 +14,14 @@ use mongodb::options::ResolverConfig;
 
 use serenity::builder::CreateApplicationCommand;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::id::GuildId;
 use serenity::prelude::Context;
 
 pub mod announce;
 pub mod check;
 pub mod get;
+pub mod list;
+pub mod next;
 pub mod set;
 pub mod unannounce;
 pub mod unset;
@@ -38,6 +41,8 @@ pub fn create_birthday_command(command: &mut CreateApplicationCommand) -> &mut C
         .create_option(get::create_birthday_get_subcommand)
         .create_option(set::create_birthday_set_subcommand)
         .create_option(unset::create_birthday_unset_subcommand)
+        .create_option(list::create_birthday_list_subcommand)
+        .create_option(next::create_birthday_next_subcommand)
 }
 
 /// Handles the `birthday` command and its subcommands.
@@ -63,6 +68,8 @@ pub async fn handle_birthday_command(command: &ApplicationCommandInteraction, co
         "unset" => unset::handle_birthday_unset_subcommand(command, context).await,
         "announce" => announce::handle_birthday_announce_subcommand(subcommand, command, context).await,
         "unannounce" => unannounce::handle_birthday_unannounce_subcommand(command, context).await,
+        "list" => list::handle_birthday_list_subcommand(subcommand, command, context).await,
+        "next" => next::handle_birthday_next_subcommand(subcommand, command, context).await,
         subcommand_name => Err(BotError::CommandError(format!("The sub-command {} is not recognised.", subcommand_name))),
     }
 }
@@ -88,4 +95,23 @@ fn get_birthday(document: &Document) -> Result<DateTime<FixedOffset>, BotError> 
         .ok_or(BotError::UserError(String::from("The date provided is invalid.")))?
         .and_hms(0, 0, 0);
     Ok(DateTime::<FixedOffset>::from_utc(naive, timezone))
+}
+
+async fn get_all_birthdays(guild: GuildId) -> Result<Vec<(i64, DateTime<FixedOffset>)>, BotError> {
+    // Build query document
+    let query = bson_birthday!();
+    // Connect to database and retrieve all documents
+    let mut cursor = connect_mongodb()
+        .await?
+        .collection::<Document>(guild.to_string().as_str())
+        .find(query, None)
+        .await?;
+    let mut birthdays = vec![];
+    while cursor.advance().await? {
+        let document = cursor.deserialize_current()?;
+        let user = document.get_i64("user")?;
+        let birth = get_birthday(&document)?;
+        birthdays.push((user, birth));
+    }
+    Ok(birthdays)
 }

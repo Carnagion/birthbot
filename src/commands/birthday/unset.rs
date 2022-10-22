@@ -43,23 +43,14 @@ pub async fn handle_birthday_unset_subcommand(command: &ApplicationCommandIntera
 
 async fn respond_birthday_unset(result: Option<Document>, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
     match result {
-        None => {
-            // If query returned nothing, birthday has not been set yet
-            command_response!(command, context, |data| data
-                .ephemeral(true)
-                .embed(|embed| embed
-                    .title("Error")
-                    .description("You haven't set a birthday yet.")
-                    .colour(Colour::from_rgb(237, 66, 69))))
-        },
-        Some(_) => {
-            // If query returned a document, birthday was removed
-            command_response!(command, context, |data| data
-                .ephemeral(true)
-                .embed(|embed| embed
-                    .title("Success")
-                    .description("Your birthday was successfully removed.")
-                    .colour(Colour::from_rgb(87, 242, 135))))
-        },
+        // If query returned nothing, birthday has not been set yet
+        None => command_error!("You haven't set a birthday yet.", command, context),
+        // If query returned a document, birthday was removed
+        Some(_) => command_response!(command, context, |data| data
+            .ephemeral(true)
+            .embed(|embed| embed
+                .title("Success")
+                .description("Your birthday was successfully removed.")
+                .colour(Colour::from_rgb(87, 242, 135)))),
     }
 }

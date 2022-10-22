@@ -26,12 +26,16 @@ pub fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandO
             .kind(CommandOptionType::Integer)
             .name("day")
             .description("Day of birth")
-            .required(true))
+            .required(true)
+            .min_int_value(1)
+            .max_int_value(31))
         .create_sub_option(|option| option
             .kind(CommandOptionType::Integer)
             .name("month")
             .description("Month of birth")
-            .required(true))
+            .required(true)
+            .min_int_value(1)
+            .max_int_value(12))
         .create_sub_option(|option| option
             .kind(CommandOptionType::Integer)
             .name("year")
@@ -41,7 +45,9 @@ pub fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandO
             .kind(CommandOptionType::Integer)
             .name("offset")
             .description("Offset from UTC in minutes")
-            .required(true))
+            .required(true)
+            .min_int_value(-1439)
+            .max_int_value(1439))
 }
 
 /// Handles the `birthday set` sub-command.
@@ -54,10 +60,10 @@ pub fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandO
 /// - There was an error responding to the command
 pub async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
     // Retrieve command options
-    let day = *require_command_int_option!(subcommand.options.get(0), "day")? as i32;
-    let month = *require_command_int_option!(subcommand.options.get(1), "month")? as i32;
-    let year = *require_command_int_option!(subcommand.options.get(2), "year")? as i32;
-    let offset = *require_command_int_option!(subcommand.options.get(3), "offset")? as i32;
+    let day = *require_command_simple_option!(subcommand.options.get(0), Integer, "day")? as i32;
+    let month = *require_command_simple_option!(subcommand.options.get(1), Integer, "month")? as i32;
+    let year = *require_command_simple_option!(subcommand.options.get(2), Integer, "year")? as i32;
+    let offset = *require_command_simple_option!(subcommand.options.get(3), Integer, "offset")? as i32;
     let timezone = FixedOffset::east_opt((offset) * 60)
         .ok_or(BotError::UserError(String::from("The offset provided is invalid.")))?;
     let naive = NaiveDate::from_ymd_opt(year, month as u32, day as u32)

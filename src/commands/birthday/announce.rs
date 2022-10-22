@@ -7,6 +7,7 @@ use serenity::builder::CreateApplicationCommandOption;
 use serenity::model::application::command::CommandOptionType;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::application_command::CommandDataOption;
+use serenity::model::channel::ChannelType;
 use serenity::model::channel::PartialChannel;
 use serenity::prelude::Context;
 use serenity::utils::Colour;
@@ -23,7 +24,8 @@ pub fn create_birthday_announce_subcommand(subcommand: &mut CreateApplicationCom
             .kind(CommandOptionType::Channel)
             .name("channel")
             .description("The channel for birthday announcements")
-            .required(true))
+            .required(true)
+            .channel_types(&[ChannelType::Text, ChannelType::Private, ChannelType::PublicThread, ChannelType::PrivateThread]))
 }
 
 /// Handles the `birthday announce` sub-command.
@@ -35,14 +37,14 @@ pub fn create_birthday_announce_subcommand(subcommand: &mut CreateApplicationCom
 /// - There was an error responding to the command
 pub async fn handle_birthday_announce_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
     // Retrieve command options
-    let channel = require_command_channel_option!(subcommand.options.get(0), "channel")?;
+    let channel = require_command_simple_option!(subcommand.options.get(0), Channel, "channel")?;
     let guild = command.guild_id
         .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
     // Build query and operation documents
     let query = bson::doc! {
-        "config": {
+        "config.channel": {
             "$exists": true,
-            "$type": "object",
+            "$type": "long",
         },
     };
     let operation = bson::doc! {
