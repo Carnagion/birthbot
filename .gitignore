@@ -1,6 +1,8 @@
-Cargo.lock
-/target
+# Rust
+target/
 
-**/.idea
+# JetBrains
+.idea/
 
-**/.env
+# Environment variables
+.env
