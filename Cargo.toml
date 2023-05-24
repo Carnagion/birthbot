@@ -1,16 +1,13 @@
 [package]
 name = "birthbot"
-version = "0.2.1"
-license = "MIT"
+version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-chrono = "0.4.22"
-dotenv = "0.15.0"
-mongodb = "2.3.1"
-serenity = { version = "0.11", default-features = false, features = ["client", "gateway", "rustls_backend", "model"] }
-tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
-
-[features]
-default = []
-guild = []
+chrono = { version = "0.4.24", features = ["serde"] }
+# mongodb = "2.5.0"
+mongodm = "0.9.1"
+poise = "0.5.5"
+serde = { version = "1.0.163", features = ["derive"] }
+snafu = "0.7.4"
+tokio = "1.28.1"

@@ -1,56 +1,44 @@
-//! Generates and handles the `birthday unset` sub-command.
+use mongodm::prelude::*;
 
-use mongodb::bson::Document;
+use crate::prelude::{utils::*, *};
 
-use serenity::builder::CreateApplicationCommandOption;
-use serenity::model::application::command::CommandOptionType;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::prelude::Context;
-use serenity::utils::Colour;
+#[poise::command(slash_command, guild_only)]
+pub async fn unset(context: BotContext<'_>) -> BotResult<()> {
+    // Defer the response to allow time for query execution
+    context.defer_or_broadcast().await?;
 
-use crate::errors::BotError;
+    let user_id = context.author().id;
+    let guild_id = context.guild_id().unwrap(); // PANICS: Will always exist as the command is guild-only
 
-/// Generates the `birthday unset` sub-command.
-pub fn create_birthday_unset_subcommand(subcommand: &mut CreateApplicationCommandOption) -> &mut CreateApplicationCommandOption {
-    subcommand
-        .kind(CommandOptionType::SubCommand)
-        .name("unset")
-        .description("Remove a user's birthday.")
-}
-
-/// Handles the `birthday unset` sub-command.
-///
-/// # Errors
-/// A [BotError] is returned in situations including but not limited to:
-/// - The required sub-command option is not present or resolved
-/// - The sub-command option has an invalid value
-/// - There was an error connecting to or updating the database
-/// - There was an error responding to the command
-pub async fn handle_birthday_unset_subcommand(command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
-    let guild = command.guild_id
-        .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
-    // Build query document
-    let query = bson_birthday!(command.user.id.0 as i64);
-    // Connect to database and find collection
-    let database = super::connect_mongodb().await?;
-    let collection = database.collection::<Document>(guild.to_string().as_str());
-    // Delete document
-    let result = collection
-        .find_one_and_delete(query, None)
+    // Delete the member's birthday
+    let member_repo = context.data().database.repository::<MemberData>();
+    let deleted = member_repo
+        .delete_one(
+            doc! {
+                field!(user_id in MemberData): user_id.to_bson()?,
+                field!(guild_id in MemberData): guild_id.to_bson()?,
+            },
+            None,
+        )
         .await?;
-    respond_birthday_unset(result, command, context).await
-}
 
-async fn respond_birthday_unset(result: Option<Document>, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
-    match result {
-        // If query returned nothing, birthday has not been set yet
-        None => command_error!("You haven't set a birthday yet.", command, context),
-        // If query returned a document, birthday was removed
-        Some(_) => command_response!(command, context, |data| data
-            .ephemeral(true)
-            .embed(|embed| embed
-                .title("Success")
+    if deleted.deleted_count == 0 {
+        // Report the absence of the member's birthday
+        utils::embed(&context, true, |embed| {
+            embed
+                .unchanged()
+                .description("You haven't set a birthday yet.")
+        })
+        .await
+    } else {
+        // Acknowledge deletion of the member's birthday
+        utils::embed(&context, true, |embed| {
+            embed
+                .success()
                 .description("Your birthday was successfully removed.")
-                .colour(Colour::from_rgb(87, 242, 135)))),
-    }
+        })
+        .await
+    }?;
+
+    Ok(())
 }

@@ -1,63 +1,71 @@
-//! Generates and handles the `birthday list` sub-command.
+use mongodm::prelude::*;
 
-use chrono::DateTime;
-use chrono::FixedOffset;
+use poise::futures_util::TryStreamExt;
 
-use serenity::builder::CreateApplicationCommandOption;
-use serenity::builder::CreateEmbed;
-use serenity::model::application::command::CommandOptionType;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::model::application::interaction::application_command::CommandDataOption;
-use serenity::prelude::Context;
-use serenity::utils::Colour;
+use crate::prelude::{utils::*, *};
 
-use crate::errors::BotError;
+#[poise::command(slash_command, guild_only)]
+pub async fn list(
+    context: BotContext<'_>,
+    #[description = "List birthdays in ascending order. Defaults to false."]
+    #[flag]
+    sorted: bool,
+) -> BotResult<()> {
+    // Defer the response to allow time for query execution
+    context.defer_or_broadcast().await?;
 
-/// Generates the `birthday list` sub-command.
-pub fn create_birthday_list_subcommand(subcommand: &mut CreateApplicationCommandOption) -> &mut CreateApplicationCommandOption {
-    subcommand
-        .kind(CommandOptionType::SubCommand)
-        .name("list")
-        .description("Retrieve all birthdays.")
-        .create_sub_option(|option| option
-            .kind(CommandOptionType::Boolean)
-            .name("sorted")
-            .description("Sort displayed birthdays")
-            .required(false))
-}
+    let guild_id = context.guild_id().unwrap(); // PANICS: Will always exist as the command is guild-only
 
-/// Handles the `birthday list` sub-command.
-///
-/// # Errors
-/// A [BotError] is returned in situations including but not limited to:
-/// - The sub-command option is not resolved or has an invalid value
-/// - There was an error connecting to or querying the database
-/// - There was an error responding to the command
-pub async fn handle_birthday_list_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
-    // Retrieve command options
-    let sorted = *require_command_simple_option!(subcommand.options.get(0), Boolean, "sorted", true)?;
-    let guild = command.guild_id
-        .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
-    let mut birthdays = super::get_all_birthdays(guild).await?;
-    // Create embed response
-    match birthdays.len() {
-        0 => command_error!("There are no birthdays to list.", command, context),
-        _ => command_response!(command, context, |data| data
-                .ephemeral(true)
-                .embed(|embed| birthday_list_embed(embed, &mut birthdays, sorted))),
-    }
-}
+    // Search the database for all birthdays in the guild upto a limit
+    let member_repo = context.data().database.repository::<MemberData>();
+    let limit = 25; // NOTE: Discord allows up to 25 fields in embeds
+    let mut member_data = member_repo
+        .find(
+            doc! {
+                field!(guild_id in MemberData): guild_id.to_bson()?,
+            },
+            MongoFindOptions::builder()
+                .limit(limit as i64)
+                .batch_size(limit as u32)
+                .build(),
+        )
+        .await?
+        .into_stream()
+        .try_collect::<Vec<_>>()
+        .await?;
 
-fn birthday_list_embed<'a>(embed: &'a mut CreateEmbed, birthdays: &mut Vec<(i64, DateTime<FixedOffset>)>, sorted: bool) -> &'a mut CreateEmbed {
-    embed
-        .title("Success")
-        .description("All birthdays were successfully retrieved.")
-        .colour(Colour::from_rgb(87, 242, 135));
-    // Sort birthdays if necessary
-    if sorted {
-        birthdays.sort_by(|(_, left), (_, right)| left.cmp(right));
-    }
-    birthdays
-        .iter()
-        .fold(embed, |embed, (user, birth)| embed.field("Birthday", format!("<@{}> ({})", user, birth.date()), true))
+    if member_data.len() == 0 {
+        // Report absence of birthdays
+        utils::embed(&context, true, |embed| {
+            embed
+                .unchanged()
+                .description("There are no birthdays to list.")
+        })
+        .await
+    } else {
+        // Display the retrieved birthdays
+        utils::embed(&context, true, |embed| {
+            embed.success().description(format!(
+                "{} birthdays were successfully retrieved.",
+                member_data.len()
+            ));
+
+            // Sort birthdays if requested
+            if sorted {
+                member_data.sort_unstable_by_key(|member_data| member_data.birthday);
+            }
+
+            // Add members and their birthdays to the embed as fields
+            member_data.into_iter().fold(embed, |embed, member_data| {
+                embed.field(
+                    "Birthday",
+                    format!("<@{}> - {}", member_data.user_id, member_data.birthday),
+                    true,
+                )
+            })
+        })
+        .await
+    }?;
+
+    Ok(())
 }

@@ -1,120 +1,49 @@
-//! Generates and handles the `birthday set` sub-command.
+use mongodm::prelude::*;
 
-use chrono::DateTime;
-use chrono::FixedOffset;
-use chrono::NaiveDate;
+use crate::prelude::{utils::*, *};
 
-use mongodb::bson;
-use mongodb::bson::Document;
+#[poise::command(slash_command, guild_only)]
+pub async fn set(
+    context: BotContext<'_>,
+    #[description = "Your birthday."] birthday: Birthday,
+) -> BotResult<()> {
+    // Defer the response to allow time for query execution
+    context.defer_or_broadcast().await?;
 
-use serenity::builder::CreateApplicationCommandOption;
-use serenity::model::application::command::CommandOptionType;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::model::application::interaction::application_command::CommandDataOption;
-use serenity::prelude::Context;
-use serenity::utils::Colour;
+    let user_id = context.author().id;
+    let guild_id = context.guild_id().unwrap(); // PANICS: Will always exist as the command is guild-only
 
-use crate::errors::BotError;
-
-/// Generates the `birthday set` sub-command.
-pub fn create_birthday_set_subcommand(subcommand: &mut CreateApplicationCommandOption) -> &mut CreateApplicationCommandOption {
-    subcommand
-        .kind(CommandOptionType::SubCommand)
-        .name("set")
-        .description("Add or update a user's birthday.")
-        .create_sub_option(|option| option
-            .kind(CommandOptionType::Integer)
-            .name("day")
-            .description("Day of birth")
-            .required(true)
-            .min_int_value(1)
-            .max_int_value(31))
-        .create_sub_option(|option| option
-            .kind(CommandOptionType::Integer)
-            .name("month")
-            .description("Month of birth")
-            .required(true)
-            .min_int_value(1)
-            .max_int_value(12))
-        .create_sub_option(|option| option
-            .kind(CommandOptionType::Integer)
-            .name("year")
-            .description("Year of birth")
-            .required(true))
-        .create_sub_option(|option| option
-            .kind(CommandOptionType::Integer)
-            .name("offset")
-            .description("Offset from UTC in minutes")
-            .required(true)
-            .min_int_value(-1439)
-            .max_int_value(1439))
-}
-
-/// Handles the `birthday set` sub-command.
-///
-/// # Errors
-/// A [BotError] is returned in situations including but not limited to:
-/// - One of the required sub-command options is not present or resolved
-/// - One of the sub-command options has an invalid value
-/// - There was an error connecting to or updating the database
-/// - There was an error responding to the command
-pub async fn handle_birthday_set_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
-    // Retrieve command options
-    let day = *require_command_simple_option!(subcommand.options.get(0), Integer, "day")? as i32;
-    let month = *require_command_simple_option!(subcommand.options.get(1), Integer, "month")? as i32;
-    let year = *require_command_simple_option!(subcommand.options.get(2), Integer, "year")? as i32;
-    let offset = *require_command_simple_option!(subcommand.options.get(3), Integer, "offset")? as i32;
-    let timezone = FixedOffset::east_opt((offset) * 60)
-        .ok_or(BotError::UserError(String::from("The offset provided is invalid.")))?;
-    let naive = NaiveDate::from_ymd_opt(year, month as u32, day as u32)
-        .ok_or(BotError::UserError(String::from("The date provided is invalid.")))?
-        .and_hms(0, 0, 0);
-    let date = DateTime::<FixedOffset>::from_utc(naive, timezone);
-    let guild = command.guild_id
-        .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
-    // Build query and operation documents
-    let query = bson_birthday!(command.user.id.0 as i64);
-    let operation = bson::doc! {
-        "$set": {
-            "birth.day": day,
-            "birth.month": month,
-            "birth.year": year,
-            "birth.offset": offset,
-        },
-    };
-    // Connect to database and find collection
-    let database = super::connect_mongodb().await?;
-    let collection = database.collection::<Document>(guild.to_string().as_str());
-    // Insert or replace document
-    let replacement = collection
-        .find_one_and_update(query, operation, None)
-        .await?;
-    match replacement {
-        None => {
-            let insertion = bson::doc! {
-                "user": command.user.id.0 as i64,
-                "birth": {
-                    "day": day,
-                    "month": month,
-                    "year": year,
-                    "offset": offset,
+    // Insert or update the member's birthday
+    let member_repo = context.data().database.repository::<MemberData>();
+    let birthday = member_repo
+        .find_one_and_update(
+            doc! {
+                field!(user_id in MemberData): user_id.to_bson()?,
+                field!(guild_id in MemberData): guild_id.to_bson()?,
+            },
+            doc! {
+                Set: {
+                    field!(birthday in MemberData): birthday.to_bson()?,
                 },
-            };
-            collection
-                .insert_one(insertion, None)
-                .await?;
-            respond_birthday_set(&date, "added", command, context).await
-        },
-        Some(_) => respond_birthday_set(&date, "updated", command, context).await,
-    }
-}
+                SetOnInsert: {
+                    field!(user_id in MemberData): user_id.to_bson()?,
+                    field!(guild_id in MemberData): guild_id.to_bson()?,
+                }
+            },
+            MongoFindOneAndUpdateOptions::builder().upsert(true).build(),
+        )
+        .await?
+        .map(|member_data| member_data.birthday)
+        .unwrap(); // PANICS: Will always exist as the document is upserted
 
-async fn respond_birthday_set(date: &DateTime<FixedOffset>, action: impl Into<String>, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
-    command_response!(command, context, |data| data
-        .ephemeral(true)
-        .embed(|embed| embed
-            .title("Success")
-            .description(format!("Your birthday was successfully {}.", action.into()))
-            .field("Birthday", date.date(), true)
-            .colour(Colour::from_rgb(87, 242, 135))))
+    // Display the updated birthday
+    utils::embed(&context, true, |embed| {
+        embed
+            .success()
+            .description("Your birthday was successfully set.")
+            .field("Birthday", birthday, true)
+    })
+    .await?;
+
+    Ok(())
 }
