@@ -6,3 +6,7 @@ target/
 
 # Environment variables
 .env
+
+# Added by cargo
+
+/target
