@@ -5,7 +5,8 @@ edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4.24", features = ["serde"] }
-# mongodb = "2.5.0"
+dotenvy = "0.15.7"
+envy = "0.4.2"
 mongodm = "0.9.1"
 poise = "0.5.5"
 serde = { version = "1.0.163", features = ["derive"] }
