@@ -1,6 +1,6 @@
 use mongodm::prelude::*;
 
-use crate::prelude::{utils::*, *};
+use crate::prelude::{util::*, *};
 
 #[poise::command(slash_command, guild_only)]
 pub async fn unset(context: BotContext<'_>) -> BotResult<()> {
@@ -27,7 +27,7 @@ pub async fn unset(context: BotContext<'_>) -> BotResult<()> {
 
     if updated.modified_count == 0 {
         // Report the absence of a birthday channel for the guild
-        utils::embed(&context, true, |embed| {
+        util::embed(&context, true, |embed| {
             embed
                 .unchanged()
                 .description("The birthday channel hasn't been set yet.")
@@ -35,7 +35,7 @@ pub async fn unset(context: BotContext<'_>) -> BotResult<()> {
         .await
     } else {
         // Acknowledge deletion of the birthday channel
-        utils::embed(&context, false, |embed| {
+        util::embed(&context, false, |embed| {
             embed
                 .success()
                 .description("The birthday channel was successfully removed.")

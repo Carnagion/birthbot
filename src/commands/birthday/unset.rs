@@ -1,6 +1,6 @@
 use mongodm::prelude::*;
 
-use crate::prelude::{utils::*, *};
+use crate::prelude::{util::*, *};
 
 #[poise::command(slash_command, guild_only)]
 pub async fn unset(context: BotContext<'_>) -> BotResult<()> {
@@ -24,7 +24,7 @@ pub async fn unset(context: BotContext<'_>) -> BotResult<()> {
 
     if deleted.deleted_count == 0 {
         // Report the absence of the member's birthday
-        utils::embed(&context, true, |embed| {
+        util::embed(&context, true, |embed| {
             embed
                 .unchanged()
                 .description("You haven't set a birthday yet.")
@@ -32,7 +32,7 @@ pub async fn unset(context: BotContext<'_>) -> BotResult<()> {
         .await
     } else {
         // Acknowledge deletion of the member's birthday
-        utils::embed(&context, true, |embed| {
+        util::embed(&context, true, |embed| {
             embed
                 .success()
                 .description("Your birthday was successfully removed.")

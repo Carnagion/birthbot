@@ -16,10 +16,11 @@ mod next;
 pub use next::*;
 
 pub mod channel;
+pub use channel::channel;
 
 #[poise::command(
     slash_command,
-    subcommands("get", "set", "unset", "list", "next", "channel::channel"),
+    subcommands("get", "set", "unset", "list", "next", "channel"),
     guild_only
 )]
 pub async fn birthday(_: BotContext<'_>) -> BotResult<()> {

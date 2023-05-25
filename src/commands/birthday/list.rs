@@ -1,8 +1,8 @@
 use mongodm::prelude::*;
 
-use poise::futures_util::TryStreamExt;
+use poise::futures_util::*;
 
-use crate::prelude::{utils::*, *};
+use crate::prelude::{util::*, *};
 
 #[poise::command(slash_command, guild_only)]
 pub async fn list(
@@ -36,7 +36,7 @@ pub async fn list(
 
     if member_data.len() == 0 {
         // Report absence of birthdays
-        utils::embed(&context, true, |embed| {
+        util::embed(&context, true, |embed| {
             embed
                 .unchanged()
                 .description("There are no birthdays to list.")
@@ -44,7 +44,7 @@ pub async fn list(
         .await
     } else {
         // Display the retrieved birthdays
-        utils::embed(&context, true, |embed| {
+        util::embed(&context, true, |embed| {
             embed.success().description(format!(
                 "{} birthdays were successfully retrieved.",
                 member_data.len()

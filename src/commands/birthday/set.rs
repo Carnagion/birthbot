@@ -1,6 +1,6 @@
 use mongodm::prelude::*;
 
-use crate::prelude::{utils::*, *};
+use crate::prelude::{util::*, *};
 
 #[poise::command(slash_command, guild_only)]
 pub async fn set(
@@ -37,7 +37,7 @@ pub async fn set(
         .unwrap(); // PANICS: Will always exist as the document is upserted
 
     // Display the updated birthday
-    utils::embed(&context, true, |embed| {
+    util::embed(&context, true, |embed| {
         embed
             .success()
             .description("Your birthday was successfully set.")

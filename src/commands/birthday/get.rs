@@ -2,7 +2,7 @@ use mongodm::prelude::*;
 
 use poise::serenity_prelude::*;
 
-use crate::prelude::{utils::*, *};
+use crate::prelude::{util::*, *};
 
 #[poise::command(slash_command, guild_only)]
 pub async fn get(

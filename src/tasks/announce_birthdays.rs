@@ -2,17 +2,15 @@ use chrono::{prelude::*, Duration};
 
 use mongodm::prelude::*;
 
-use poise::serenity_prelude::{colours::branding::FUCHSIA, Context};
+use poise::serenity_prelude::{colours::branding::FUCHSIA, *};
 
 use snafu::prelude::*;
 
 use tokio::time;
 
-use crate::prelude::{utils::SerializeExt, *};
+use crate::prelude::{util::*, *};
 
-pub fn schedule_birthday_announcer(context: &BotContext<'_>) -> BotResult<()> {
-    let data = context.data().clone();
-    let context = context.serenity_context().clone();
+pub fn schedule_birthday_announcer(context: Context, data: BotData) -> BotResult<()> {
     let mut interval = time::interval(data.birthday_check_interval);
     tokio::spawn(async move {
         loop {

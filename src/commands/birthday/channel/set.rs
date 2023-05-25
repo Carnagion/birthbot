@@ -1,8 +1,8 @@
 use mongodm::prelude::*;
 
-use poise::serenity_prelude::Channel;
+use poise::serenity_prelude::*;
 
-use crate::prelude::{utils::*, *};
+use crate::prelude::{util::*, *};
 
 #[poise::command(slash_command, guild_only)]
 pub async fn set(
@@ -38,7 +38,7 @@ pub async fn set(
         .unwrap(); // PANICS: Will always exist as the document is upserted
 
     // Display the updated birthday channel
-    utils::embed(&context, false, |embed| {
+    util::embed(&context, false, |embed| {
         embed
             .success()
             .description("The birthday channel was successfully set.")

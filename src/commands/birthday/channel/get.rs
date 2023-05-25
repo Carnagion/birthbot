@@ -1,6 +1,6 @@
 use mongodm::prelude::*;
 
-use crate::prelude::{utils::*, *};
+use crate::prelude::{util::*, *};
 
 #[poise::command(slash_command, guild_only)]
 pub async fn get(context: BotContext<'_>) -> BotResult<()> {
@@ -24,7 +24,7 @@ pub async fn get(context: BotContext<'_>) -> BotResult<()> {
     match channel_id {
         // Display the retrieved birthday channel
         Some(channel_id) => {
-            utils::embed(&context, true, |embed| {
+            util::embed(&context, true, |embed| {
                 embed
                     .success()
                     .description("The birthday channel was successfully retrieved.")
@@ -34,7 +34,7 @@ pub async fn get(context: BotContext<'_>) -> BotResult<()> {
         },
         // Report the absence of a birthday channel for the guild
         None => {
-            utils::embed(&context, true, |embed| {
+            util::embed(&context, true, |embed| {
                 embed
                     .unchanged()
                     .description("The birthday channel hasn't been set yet.")

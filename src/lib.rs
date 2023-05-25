@@ -6,8 +6,8 @@ pub mod model;
 
 pub mod commands;
 
+pub mod tasks;
+
 mod bot_data;
 
 mod error;
-
-mod tasks;

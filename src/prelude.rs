@@ -7,7 +7,7 @@ pub use crate::{
     model::{GuildData, MemberData},
 };
 
-pub(crate) mod utils;
+pub(crate) mod util;
 
 pub type BotCommand = Command<BotData, BotError>;
 
