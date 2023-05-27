@@ -22,7 +22,7 @@ use birthbot::{commands, prelude::*, tasks};
 struct Config {
     birthbot_token: String,
     birthbot_mongodb_uri: String,
-    birthbot_mongodb_database: String,
+    birthbot_database_name: String,
     birthbot_birthday_check_interval: u32,
     birthbot_test_guild_id: Option<GuildId>,
 }
@@ -60,7 +60,7 @@ async fn main() -> Result<(), StartupError> {
                 let data = BotData {
                     database: connect_mongodb(
                         &config.birthbot_mongodb_uri,
-                        &config.birthbot_mongodb_database,
+                        &config.birthbot_database_name,
                     )
                     .await?,
                     birthday_check_interval: Duration::from_secs(
