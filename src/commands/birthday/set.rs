@@ -2,7 +2,7 @@ use mongodm::prelude::*;
 
 use crate::prelude::{util::*, *};
 
-#[poise::command(slash_command, guild_only)]
+#[poise::command(slash_command, guild_only, on_error = "util::report_framework_error")]
 pub async fn set(
     context: BotContext<'_>,
     #[description = "Your birthday."] birthday: Birthday,

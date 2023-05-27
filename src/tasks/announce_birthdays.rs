@@ -1,5 +1,7 @@
 use chrono::{prelude::*, Duration};
 
+use log::error;
+
 use mongodm::prelude::*;
 
 use poise::serenity_prelude::{colours::branding::FUCHSIA, *};
@@ -14,7 +16,9 @@ pub fn schedule_birthday_announcer(context: Context, data: BotData) -> BotResult
     let mut interval = time::interval(data.birthday_check_interval);
     tokio::spawn(async move {
         loop {
-            if let Err(err) = check_birthdays(&context, &data).await {}
+            if let Err(error) = check_birthdays(&context, &data).await {
+                error!("Birthday announcing task failed: {}", error);
+            }
             interval.tick().await;
         }
     });

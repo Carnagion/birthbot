@@ -21,7 +21,8 @@ pub use channel::channel;
 #[poise::command(
     slash_command,
     subcommands("get", "set", "unset", "list", "next", "channel"),
-    guild_only
+    guild_only,
+    on_error = "util::report_framework_error"
 )]
 pub async fn birthday(_: BotContext<'_>) -> BotResult<()> {
     unreachable!() // PANICS: Will never be reached as the command is slash-only, and parent slash commands cannot be called without subcommands

@@ -4,7 +4,7 @@ use poise::serenity_prelude::*;
 
 use crate::prelude::{util::*, *};
 
-#[poise::command(slash_command, guild_only)]
+#[poise::command(slash_command, guild_only, on_error = "util::report_framework_error")]
 pub async fn set(
     context: BotContext<'_>,
     #[description = "The birthday channel."]

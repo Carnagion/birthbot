@@ -52,7 +52,7 @@ async fn main() -> Result<(), StartupError> {
         .intents(GatewayIntents::non_privileged())
         .options(FrameworkOptions {
             commands: vec![commands::birthday()],
-            // on_error: todo!()
+            on_error: |error| Box::pin(util::report_framework_error(error)),
             ..Default::default()
         })
         .setup(move |context, _, framework| {

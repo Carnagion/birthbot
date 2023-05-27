@@ -4,7 +4,7 @@ use poise::futures_util::*;
 
 use crate::prelude::{util::*, *};
 
-#[poise::command(slash_command, guild_only)]
+#[poise::command(slash_command, guild_only, on_error = "util::report_framework_error")]
 pub async fn list(
     context: BotContext<'_>,
     #[description = "List birthdays in ascending order. Defaults to false."]

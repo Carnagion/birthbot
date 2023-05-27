@@ -6,7 +6,7 @@ use poise::futures_util::*;
 
 use crate::prelude::{util::*, *};
 
-#[poise::command(slash_command, guild_only)]
+#[poise::command(slash_command, guild_only, on_error = "util::report_framework_error")]
 pub async fn next(
     context: BotContext<'_>,
     #[description = "How many upcoming birthdays to retrieve. Defaults to 1."]

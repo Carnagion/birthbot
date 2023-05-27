@@ -80,6 +80,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "envy",
+ "log",
  "mongodm",
  "poise",
  "serde",
