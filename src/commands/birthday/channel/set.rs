@@ -18,7 +18,7 @@ pub async fn set(
 
     // Insert or update the requested guild's birthday channel
     let guild_repo = context.data().database.repository::<GuildData>();
-    let channel_id = guild_repo
+    guild_repo
         .find_one_and_update(
             doc! {
                 field!(guild_id in GuildData): guild_id.to_bson()?,
@@ -33,16 +33,14 @@ pub async fn set(
             },
             MongoFindOneAndUpdateOptions::builder().upsert(true).build(),
         )
-        .await?
-        .and_then(|guild_data| guild_data.birthday_channel_id)
-        .unwrap(); // PANICS: Will always exist as the document is upserted
+        .await?;
 
     // Display the updated birthday channel
     util::embed(&context, false, |embed| {
         embed
             .success()
             .description("The birthday channel was successfully set.")
-            .field("Channel", format!("<#{}>", channel_id), true)
+            .field("Channel", format!("<#{}>", channel.id()), true)
     })
     .await?;
 

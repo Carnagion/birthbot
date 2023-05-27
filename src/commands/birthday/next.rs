@@ -15,7 +15,7 @@ pub async fn next(
     limit: Option<u8>,
 ) -> BotResult<()> {
     // Defer the response to allow time for query execution
-    context.defer_or_broadcast().await?;
+    context.defer_ephemeral().await?;
 
     let guild_id = context.guild_id().unwrap(); // PANICS: Will always exist as the command is guild-only
 

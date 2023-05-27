@@ -10,7 +10,7 @@ pub async fn get(
     #[description = "Whose birthday to retrieve. Defaults to you."] user: Option<User>,
 ) -> BotResult<()> {
     // Defer the response to allow time for query execution
-    context.defer_or_broadcast().await?;
+    context.defer_ephemeral().await?;
 
     let user_id = user.as_ref().unwrap_or(context.author()).id;
     let guild_id = context.guild_id().unwrap(); // PANICS: Will always exist as the command is guild-only

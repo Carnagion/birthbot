@@ -8,14 +8,14 @@ pub async fn set(
     #[description = "Your birthday."] birthday: Birthday,
 ) -> BotResult<()> {
     // Defer the response to allow time for query execution
-    context.defer_or_broadcast().await?;
+    context.defer_ephemeral().await?;
 
     let user_id = context.author().id;
     let guild_id = context.guild_id().unwrap(); // PANICS: Will always exist as the command is guild-only
 
     // Insert or update the member's birthday
     let member_repo = context.data().database.repository::<MemberData>();
-    let birthday = member_repo
+    member_repo
         .find_one_and_update(
             doc! {
                 field!(user_id in MemberData): user_id.to_bson()?,
@@ -32,9 +32,7 @@ pub async fn set(
             },
             MongoFindOneAndUpdateOptions::builder().upsert(true).build(),
         )
-        .await?
-        .map(|member_data| member_data.birthday)
-        .unwrap(); // PANICS: Will always exist as the document is upserted
+        .await?;
 
     // Display the updated birthday
     util::embed(&context, true, |embed| {
