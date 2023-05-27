@@ -22,7 +22,7 @@ pub struct MemberDataCollection;
 
 impl CollectionConfig for MemberDataCollection {
     fn collection_name() -> &'static str {
-        "member_data"
+        "member-data"
     }
 
     fn indexes() -> Indexes {

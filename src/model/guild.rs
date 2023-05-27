@@ -20,7 +20,7 @@ pub struct GuildDataCollection;
 
 impl CollectionConfig for GuildDataCollection {
     fn collection_name() -> &'static str {
-        "guild_data"
+        "guild-data"
     }
 
     fn indexes() -> Indexes {
