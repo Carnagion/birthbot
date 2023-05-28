@@ -63,12 +63,9 @@ pub async fn next(
         // Display the retrieved birthdays
         util::embed(&context, true, |embed| {
             embed.success().description(if member_data.len() == 1 {
-                "The next birthday was successfully retrieved.".to_owned()
+                "The next birthday was successfully retrieved."
             } else {
-                format!(
-                    "The next {} birthdays were successfully retrieved.",
-                    member_data.len()
-                )
+                "The next birthdays were successfully retrieved."
             });
 
             // Sort birthdays and find the first one that comes after the current day
@@ -95,7 +92,7 @@ pub async fn next(
                     // Add the birthday as a field
                     embed.field(
                         "Birthday",
-                        format!("<@{}> - {}", user_id, Birthday::format(&birthday)),
+                        format!("`{}` - <@{}>", Birthday::format(&birthday), user_id),
                         true,
                     )
                 })

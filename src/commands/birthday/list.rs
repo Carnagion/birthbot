@@ -50,10 +50,14 @@ pub async fn list(
     } else {
         // Display the retrieved birthdays
         util::embed(&context, true, |embed| {
-            embed.success().description(format!(
-                "{} birthdays were successfully retrieved.",
-                member_data.len()
-            ));
+            embed.success().description(if member_data.len() == 1 {
+                "1 birthday was successfully retrieved.".to_owned()
+            } else {
+                format!(
+                    "{} birthdays were successfully retrieved.",
+                    member_data.len()
+                )
+            });
 
             // Sort birthdays if requested
             if sorted {
@@ -64,7 +68,7 @@ pub async fn list(
             member_data.into_iter().fold(embed, |embed, member_data| {
                 embed.field(
                     "Birthday",
-                    format!("<@{}> - {}", member_data.user_id, member_data.birthday),
+                    format!("`{}` - <@{}>", member_data.birthday, member_data.user_id),
                     true,
                 )
             })

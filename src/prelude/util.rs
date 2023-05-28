@@ -83,7 +83,14 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
                     .error()
                     .description("One of the arguments provided is invalid.");
                 if let Some(arg) = input {
-                    embed.field("Argument", arg, true);
+                    embed.field(
+                        "Argument",
+                        format!(
+                            "```\n{}\n```",
+                            arg.replace("```", "\u{200B}`\u{200B}`\u{200B}`") // NOTE: Zero width spaces
+                        ),
+                        true,
+                    );
                 }
                 embed.field("Details", error, true)
             })
@@ -118,8 +125,8 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
                     .error()
                     .description("A cooldown is still active.")
                     .field(
-                        "Duration",
-                        format!("{} second(s)", remaining_cooldown.as_secs()),
+                        "Time remaining",
+                        format!("`{}` second(s)", remaining_cooldown.as_secs()),
                         true,
                     )
             })
@@ -133,7 +140,11 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
                 embed
                     .error()
                     .description("More permissions are required to execute your command.")
-                    .field("Missing permissions", missing_permissions, true)
+                    .field(
+                        "Missing permissions",
+                        format!("```\n{}\n```", missing_permissions),
+                        true,
+                    )
             })
             .await
         },
@@ -146,7 +157,11 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
                     .error()
                     .description("You require more permissions to use that command.");
                 if let Some(missing_permissions) = missing_permissions {
-                    embed.field("Missing permissions", missing_permissions, true);
+                    embed.field(
+                        "Missing permissions",
+                        format!("```\n{}\n```", missing_permissions),
+                        true,
+                    );
                 }
                 embed
             })

@@ -44,7 +44,7 @@ pub async fn set(
         embed
             .success()
             .description("Your birthday was successfully set.")
-            .field("Birthday", birthday, true)
+            .field("Birthday", format!("`{}`", birthday), true)
     })
     .await?;
 

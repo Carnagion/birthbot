@@ -43,7 +43,7 @@ pub async fn get(
                     } else {
                         format!("<@{}>'s birthday was successfully retrieved.", user_id)
                     })
-                    .field("Birthday", member_data.birthday, true)
+                    .field("Birthday", format!("`{}`", member_data.birthday), true)
             })
             .await
         },
