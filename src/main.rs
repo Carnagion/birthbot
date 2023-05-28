@@ -1,8 +1,10 @@
-use std::{num::ParseIntError, time::Duration};
+use std::{fs::File, io::Error as IoError, num::ParseIntError, path::PathBuf, time::Duration};
 
 use dotenvy::Error as DotEnvError;
 
 use envy::Error as EnvError;
+
+use log::SetLoggerError;
 
 use mongodm::{mongo::options::ResolverConfig, prelude::*};
 
@@ -14,17 +16,23 @@ use poise::{
 
 use serde::{Deserialize, Serialize};
 
+use simplelog::{
+    ColorChoice, CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode, WriteLogger,
+};
+
 use snafu::Snafu;
 
 use birthbot::{commands, prelude::*, tasks};
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
-struct Config {
+struct BotConfig {
     birthbot_token: String,
-    birthbot_mongodb_uri: String,
+    birthbot_cluster_uri: String,
     birthbot_database_name: String,
-    birthbot_birthday_check_interval: u32,
+    birthbot_birthday_check_interval: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     birthbot_test_guild_id: Option<GuildId>,
+    birthbot_log_path: PathBuf,
 }
 
 #[derive(Debug, Snafu)]
@@ -39,13 +47,31 @@ enum StartupError {
     Discord { source: DiscordError },
     #[snafu(context(false))]
     Mongodb { source: MongoError },
+    #[snafu(context(false))]
+    Log { source: SetLoggerError },
+    #[snafu(context(false))]
+    Io { source: IoError },
 }
 
 #[tokio::main]
 async fn main() -> Result<(), StartupError> {
     dotenvy::dotenv()?;
 
-    let config = envy::from_env::<Config>()?;
+    let config = envy::from_env::<BotConfig>()?;
+
+    CombinedLogger::init(vec![
+        TermLogger::new(
+            LevelFilter::Info,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ),
+        WriteLogger::new(
+            LevelFilter::Warn,
+            Config::default(),
+            File::create(config.birthbot_log_path)?,
+        ),
+    ])?;
 
     BotFramework::builder()
         .token(config.birthbot_token)
@@ -59,12 +85,12 @@ async fn main() -> Result<(), StartupError> {
             Box::pin(async move {
                 let data = BotData {
                     database: connect_mongodb(
-                        &config.birthbot_mongodb_uri,
+                        &config.birthbot_cluster_uri,
                         &config.birthbot_database_name,
                     )
                     .await?,
                     birthday_check_interval: Duration::from_secs(
-                        (config.birthbot_birthday_check_interval * 60) as u64,
+                        config.birthbot_birthday_check_interval,
                     ),
                 };
 
