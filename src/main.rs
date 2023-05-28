@@ -1,4 +1,10 @@
-use std::{fs::File, io::Error as IoError, num::ParseIntError, path::PathBuf, time::Duration};
+use std::{
+    fs::File,
+    io::Error as IoError,
+    num::ParseIntError,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 use dotenvy::Error as DotEnvError;
 
@@ -59,19 +65,7 @@ async fn main() -> Result<(), StartupError> {
 
     let config = envy::from_env::<BotConfig>()?;
 
-    CombinedLogger::init(vec![
-        TermLogger::new(
-            LevelFilter::Info,
-            Config::default(),
-            TerminalMode::Mixed,
-            ColorChoice::Auto,
-        ),
-        WriteLogger::new(
-            LevelFilter::Warn,
-            Config::default(),
-            File::create(config.birthbot_log_path)?,
-        ),
-    ])?;
+    init_logger(&config.birthbot_log_path)?;
 
     BotFramework::builder()
         .token(config.birthbot_token)
@@ -111,6 +105,23 @@ async fn main() -> Result<(), StartupError> {
         .start()
         .await?;
 
+    Ok(())
+}
+
+fn init_logger(log_path: impl AsRef<Path>) -> Result<(), StartupError> {
+    CombinedLogger::init(vec![
+        TermLogger::new(
+            LevelFilter::Info,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ),
+        WriteLogger::new(
+            LevelFilter::Warn,
+            Config::default(),
+            File::create(log_path)?,
+        ),
+    ])?;
     Ok(())
 }
 
