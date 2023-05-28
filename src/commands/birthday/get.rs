@@ -4,7 +4,12 @@ use poise::serenity_prelude::*;
 
 use crate::prelude::{util::*, *};
 
-#[poise::command(slash_command, guild_only, on_error = "util::report_framework_error")]
+#[poise::command(
+    slash_command,
+    guild_only,
+    ephemeral,
+    on_error = "util::report_framework_error"
+)]
 pub async fn get(
     context: BotContext<'_>,
     #[description = "Whose birthday to retrieve. Defaults to you."] user: Option<User>,

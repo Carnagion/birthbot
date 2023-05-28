@@ -2,7 +2,12 @@ use mongodm::prelude::*;
 
 use crate::prelude::{util::*, *};
 
-#[poise::command(slash_command, guild_only, on_error = "util::report_framework_error")]
+#[poise::command(
+    slash_command,
+    guild_only,
+    ephemeral,
+    on_error = "util::report_framework_error"
+)]
 pub async fn unset(context: BotContext<'_>) -> BotResult<()> {
     // Defer the response to allow time for query execution
     context.defer_ephemeral().await?;
