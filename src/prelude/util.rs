@@ -71,13 +71,17 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
         BotFrameworkError::Command { error, ctx } => {
             error!("Command execution failed: {}", error);
             embed(&ctx, true, |embed| {
-                embed.description("The command failed to execute to completion.")
+                embed
+                    .error()
+                    .description("The command failed to execute to completion.")
             })
             .await
         },
         BotFrameworkError::ArgumentParse { error, input, ctx } => {
             embed(&ctx, true, |embed| {
-                embed.description("One of the arguments provided is invalid.");
+                embed
+                    .error()
+                    .description("One of the arguments provided is invalid.");
                 if let Some(arg) = input {
                     embed.field("Argument", arg, true);
                 }
@@ -88,7 +92,9 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
         BotFrameworkError::CommandStructureMismatch { description, ctx } => {
             error!("Command structure mismatch: {}", description);
             embed(&BotContext::Application(ctx), true, |embed| {
-                embed.description("The command is structured incorrectly.")
+                embed
+                    .error()
+                    .description("The command is structured incorrectly.")
             })
             .await
         },
@@ -97,7 +103,9 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
                 error!("Command verification error: {}", error);
             }
             embed(&ctx, true, |embed| {
-                embed.description("One of the command verification checks failed.")
+                embed
+                    .error()
+                    .description("One of the command verification checks failed.")
             })
             .await
         },
@@ -106,11 +114,14 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
             ctx,
         } => {
             embed(&ctx, true, |embed| {
-                embed.description("A cooldown is still active.").field(
-                    "Duration",
-                    format!("{} second(s)", remaining_cooldown.as_secs()),
-                    true,
-                )
+                embed
+                    .error()
+                    .description("A cooldown is still active.")
+                    .field(
+                        "Duration",
+                        format!("{} second(s)", remaining_cooldown.as_secs()),
+                        true,
+                    )
             })
             .await
         },
@@ -120,6 +131,7 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
         } => {
             embed(&ctx, true, |embed| {
                 embed
+                    .error()
                     .description("More permissions are required to execute your command.")
                     .field("Missing permissions", missing_permissions, true)
             })
@@ -130,7 +142,9 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
             ctx,
         } => {
             embed(&ctx, true, |embed| {
-                embed.description("You require more permissions to use that command.");
+                embed
+                    .error()
+                    .description("You require more permissions to use that command.");
                 if let Some(missing_permissions) = missing_permissions {
                     embed.field("Missing permissions", missing_permissions, true);
                 }
@@ -140,25 +154,33 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
         },
         BotFrameworkError::NotAnOwner { ctx } => {
             embed(&ctx, true, |embed| {
-                embed.description("Only the guild owner can use that command.")
+                embed
+                    .error()
+                    .description("Only the guild owner can use that command.")
             })
             .await
         },
         BotFrameworkError::GuildOnly { ctx } => {
             embed(&ctx, true, |embed| {
-                embed.description("That command can only be used in guilds.")
+                embed
+                    .error()
+                    .description("That command can only be used in guilds.")
             })
             .await
         },
         BotFrameworkError::DmOnly { ctx } => {
             embed(&ctx, true, |embed| {
-                embed.description("That command can only be used in direct messages.")
+                embed
+                    .error()
+                    .description("That command can only be used in direct messages.")
             })
             .await
         },
         BotFrameworkError::NsfwOnly { ctx } => {
             embed(&ctx, true, |embed| {
-                embed.description("That command can only be used in NSFW channels.")
+                embed
+                    .error()
+                    .description("That command can only be used in NSFW channels.")
             })
             .await
         },
