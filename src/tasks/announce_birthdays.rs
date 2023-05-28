@@ -13,19 +13,30 @@ use tokio::time;
 use crate::prelude::{util::*, *};
 
 pub fn schedule_birthday_announcer(context: Context, data: BotData) -> BotResult<()> {
+    let interval = data.birthday_check_interval;
+    let half_interval = Duration::from_std(interval)
+        .with_context(|_| DurationOutOfRangeSnafu { duration: interval })?
+        / 2;
+
     let mut interval = time::interval(data.birthday_check_interval);
+
     tokio::spawn(async move {
         loop {
-            if let Err(error) = check_birthdays(&context, &data).await {
+            interval.tick().await;
+            if let Err(error) = check_birthdays(&context, &data, half_interval).await {
                 error!("Birthday announcing task failed: {}", error);
             }
-            interval.tick().await;
         }
     });
+
     Ok(())
 }
 
-async fn check_birthdays(context: &Context, data: &BotData) -> BotResult<()> {
+async fn check_birthdays(
+    context: &Context,
+    data: &BotData,
+    half_interval: Duration,
+) -> BotResult<()> {
     let member_repo = data.database.repository::<MemberData>();
     let mut member_data = member_repo.find(None, None).await?;
     while member_data.advance().await? {
@@ -33,10 +44,6 @@ async fn check_birthdays(context: &Context, data: &BotData) -> BotResult<()> {
 
         // Calculate the range in which a birthday is recognised
         let now = Utc::now(); // NOTE: Done inside loop because time between database requests may be significant
-        let interval = data.birthday_check_interval;
-        let interval = Duration::from_std(interval)
-            .with_context(|_| DurationOutOfRangeSnafu { duration: interval })?;
-        let half_interval = interval / 2;
 
         // Calculate the member's birthday in UTC and with the current year
         let birthday_utc = member_data.birthday.0.with_timezone(&Utc);
