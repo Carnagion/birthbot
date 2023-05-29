@@ -6,3 +6,6 @@ target/
 
 # Environment variables
 .env
+
+# Log files
+*.log
