@@ -4,6 +4,9 @@ use poise::futures_util::*;
 
 use crate::prelude::{util::*, *};
 
+/// List all birthdays.
+///
+/// Due to Discord's limitation on message and embed sizes, this can only list up to 25 birthdays at once.
 #[poise::command(
     slash_command,
     guild_only,

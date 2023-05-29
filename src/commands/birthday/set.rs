@@ -2,6 +2,7 @@ use mongodm::prelude::*;
 
 use crate::prelude::{util::*, *};
 
+/// Set your birthday.
 #[poise::command(
     slash_command,
     guild_only,

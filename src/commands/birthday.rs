@@ -18,6 +18,9 @@ pub use next::*;
 pub mod channel;
 pub use channel::channel;
 
+/// Parent command for all birthday-related subcommands.
+///
+/// This command cannot actually be called by itself - it requires a subcommand.
 #[poise::command(
     slash_command,
     subcommands("get", "set", "unset", "list", "next", "channel"),

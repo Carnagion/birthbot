@@ -4,6 +4,7 @@ use poise::serenity_prelude::*;
 
 use crate::prelude::{util::*, *};
 
+/// Get the birthday of a user.
 #[poise::command(
     slash_command,
     guild_only,

@@ -12,6 +12,7 @@ use tokio::time;
 
 use crate::prelude::{util::*, *};
 
+/// Schedules an indefinitely running background task to check for birthdays and announce them in the respective guilds.
 pub fn schedule_birthday_announcer(context: Context, data: BotData) -> BotResult<()> {
     let interval = data.birthday_check_interval;
     let half_interval = Duration::from_std(interval)

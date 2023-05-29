@@ -4,6 +4,7 @@ use poise::serenity_prelude::*;
 
 use crate::prelude::{util::*, *};
 
+/// Set the birthday announcement channel.
 #[poise::command(
     slash_command,
     guild_only,

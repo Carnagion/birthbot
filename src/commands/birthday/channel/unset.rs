@@ -2,6 +2,7 @@ use mongodm::prelude::*;
 
 use crate::prelude::{util::*, *};
 
+/// Remove the birthday announcement channel.
 #[poise::command(
     slash_command,
     guild_only,

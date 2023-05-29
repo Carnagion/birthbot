@@ -9,6 +9,9 @@ pub use set::*;
 mod unset;
 pub use unset::*;
 
+/// Parent command for all birthday channel-related subcommands.
+///
+/// This command cannot actually be called by itself - it requires a subcommand.
 #[poise::command(
     slash_command,
     subcommands("get", "set", "unset"),

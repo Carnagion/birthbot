@@ -4,9 +4,12 @@ use poise::serenity_prelude::*;
 
 use serde::{Deserialize, Serialize};
 
+/// Configuration-related data of a guild.
 #[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct GuildData {
+    /// The guild's ID.
     pub guild_id: GuildId,
+    /// The ID of the channel where birthdays are announced.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub birthday_channel_id: Option<ChannelId>,
 }
@@ -15,6 +18,7 @@ impl Model for GuildData {
     type CollConf = GuildDataCollection;
 }
 
+/// Collection name and indexes for [`GuildData`].
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct GuildDataCollection;
 

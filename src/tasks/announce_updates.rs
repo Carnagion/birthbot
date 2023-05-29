@@ -6,6 +6,7 @@ use version::version;
 
 use crate::prelude::*;
 
+/// Announces an update and provides changelogs in all servers that the bot is part of.
 pub async fn announce_updates(context: &Context, data: &BotData, updates: &str) -> BotResult<()> {
     let guild_repo = data.database.repository::<GuildData>();
     let mut guild_data = guild_repo.find(None, None).await?;

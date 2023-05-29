@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use snafu::Snafu;
 
+/// A birthday represented as a date and time with a specific timezone.
 #[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(transparent)]
 pub struct Birthday(pub DateTime<FixedOffset>);
@@ -20,6 +21,7 @@ pub struct Birthday(pub DateTime<FixedOffset>);
 impl Birthday {
     const DISPLAY_FORMAT: &str = "%d %B %Y %:z";
 
+    /// Formats a [`DateTime`] in the same way as a [`Birthday`].
     pub fn format<Tz>(datetime: &DateTime<Tz>) -> impl Display
     where
         Tz: TimeZone,
@@ -61,11 +63,16 @@ impl Display for Birthday {
     }
 }
 
-#[derive(Debug, Snafu)]
+/// Possible errors that can arise while parsing a [`Birthday`].
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Snafu)]
 pub enum BirthdayParseError {
+    /// The input was empty.
+    #[snafu(display("Input is empty"))]
     Empty,
-    #[snafu(context(false))]
+    /// The input was formatted incorrectly.
+    #[snafu(context(false), display("{}", source))]
     Invalid {
+        /// The underlying source of the parsing error.
         source: ParseError,
     },
 }

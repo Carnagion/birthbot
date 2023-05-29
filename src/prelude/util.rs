@@ -18,11 +18,15 @@ use snafu::prelude::*;
 
 use crate::prelude::*;
 
+/// Extension trait for embed colours and titles commonly used by the bot.
 pub trait CreateEmbedExt {
+    /// Modifies an embed to have a border colour and title representing a successful operation.
     fn success(&mut self) -> &mut Self;
 
+    /// Modifies an embed to have a border colour and title representing the lack of any significant change in data.
     fn unchanged(&mut self) -> &mut Self;
 
+    /// Modifies an embed to have a border colour and title representing a failed operation.
     fn error(&mut self) -> &mut Self;
 }
 
@@ -40,6 +44,7 @@ impl CreateEmbedExt for CreateEmbed {
     }
 }
 
+/// Wrapper for constructing command reply consisting of nothing but an embed.
 pub async fn embed(
     context: &BotContext<'_>,
     ephemeral: bool,
@@ -51,7 +56,9 @@ pub async fn embed(
     Ok(())
 }
 
+/// Extension trait for converting any [`Serialize`]-able type to BSON through a method.
 pub trait SerializeExt: Serialize {
+    /// Converts the value to [`Bson`].
     fn to_bson(&self) -> BotResult<Bson>;
 }
 
@@ -66,6 +73,10 @@ where
     }
 }
 
+/// Reports an error that occurred during the bot's running time.
+///
+/// This will attempt to display the error to the user if possible, using an embed for consistency with the rest of the bot's replies.
+/// All errors and failures to report them are also logged.
 pub async fn report_framework_error(error: BotFrameworkError<'_>) {
     let result = match error {
         BotFrameworkError::Command { error, ctx } => {

@@ -2,6 +2,7 @@ use mongodm::prelude::*;
 
 use crate::prelude::{util::*, *};
 
+/// Remove your birthday.
 #[poise::command(
     slash_command,
     guild_only,
