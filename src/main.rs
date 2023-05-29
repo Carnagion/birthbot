@@ -29,18 +29,25 @@ use birthbot::{commands, prelude::*, tasks};
 #[derive(Clone, Debug, Eq, Hash, Parser, PartialEq)]
 #[command(author, version, about)]
 struct BotConfig {
+    /// Discord token.
     #[arg(short, long)]
     token: String,
+    /// MongoDB cluster connection URI.
     #[arg(short, long)]
     cluster_uri: String,
+    /// Name of the database within the MongoDB cluster.
     #[arg(short, long)]
     database_name: String,
+    /// Duration between birthday announcement checks in seconds.
     #[arg(long, value_name = "SECONDS", default_value_t = 900)]
     birthday_check_interval: u64,
+    /// Guild ID of testing guild, if any.
     #[arg(long, value_name = "GUILD_ID", value_parser = |value: &str| value.parse().map(GuildId))]
     test_guild_id: Option<GuildId>,
+    /// Path to log file.
     #[arg(long, value_name = "FILE")]
     log_file: PathBuf,
+    /// Path to file listing new updates, if any.
     #[arg(long, value_name = "FILE")]
     updates_file: Option<PathBuf>,
 }
