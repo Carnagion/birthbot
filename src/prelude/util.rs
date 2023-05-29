@@ -89,7 +89,7 @@ pub async fn report_framework_error(error: BotFrameworkError<'_>) {
                             "```\n{}\n```",
                             arg.replace("```", "\u{200B}`\u{200B}`\u{200B}`") // NOTE: Zero width spaces
                         ),
-                        true,
+                        false,
                     );
                 }
                 embed.field("Details", error, true)
