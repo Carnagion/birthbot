@@ -6,9 +6,7 @@ use std::{
     time::Duration,
 };
 
-use dotenvy::Error as DotEnvError;
-
-use envy::Error as EnvError;
+use clap::Parser;
 
 use log::SetLoggerError;
 
@@ -20,8 +18,6 @@ use poise::{
     FrameworkOptions,
 };
 
-use serde::{Deserialize, Serialize};
-
 use simplelog::{
     ColorChoice, CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode, WriteLogger,
 };
@@ -30,23 +26,25 @@ use snafu::Snafu;
 
 use birthbot::{commands, prelude::*, tasks};
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, Parser, PartialEq)]
+#[command(author, version, about)]
 struct BotConfig {
-    birthbot_token: String,
-    birthbot_cluster_uri: String,
-    birthbot_database_name: String,
-    birthbot_birthday_check_interval: u64,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    birthbot_test_guild_id: Option<GuildId>,
-    birthbot_log_path: PathBuf,
+    #[arg(short, long)]
+    token: String,
+    #[arg(short, long)]
+    cluster_uri: String,
+    #[arg(short, long)]
+    database_name: String,
+    #[arg(short = 'i', long, value_name = "SECONDS", default_value_t = 900)]
+    birthday_check_interval: u64,
+    #[arg(short = 'g', long, value_name = "GUILD_ID", value_parser = |value: &str| Ok::<_, ParseIntError>(GuildId(value.parse()?)))]
+    test_guild_id: Option<GuildId>,
+    #[arg(short, long, value_name = "FILE", default_value = "birthbot.log")]
+    log_file: PathBuf,
 }
 
 #[derive(Debug, Snafu)]
 enum StartupError {
-    #[snafu(context(false))]
-    DotEnv { source: DotEnvError },
-    #[snafu(context(false))]
-    Env { source: EnvError },
     #[snafu(context(false))]
     NumParse { source: ParseIntError },
     #[snafu(context(false))]
@@ -61,14 +59,12 @@ enum StartupError {
 
 #[tokio::main]
 async fn main() -> Result<(), StartupError> {
-    dotenvy::dotenv()?;
+    let config = BotConfig::parse();
 
-    let config = envy::from_env::<BotConfig>()?;
-
-    init_logger(&config.birthbot_log_path)?;
+    init_logger(&config.log_file)?;
 
     BotFramework::builder()
-        .token(config.birthbot_token)
+        .token(config.token)
         .intents(GatewayIntents::non_privileged())
         .options(FrameworkOptions {
             commands: vec![commands::birthday()],
@@ -78,22 +74,12 @@ async fn main() -> Result<(), StartupError> {
         .setup(move |context, _, framework| {
             Box::pin(async move {
                 let data = BotData {
-                    database: connect_mongodb(
-                        &config.birthbot_cluster_uri,
-                        &config.birthbot_database_name,
-                    )
-                    .await?,
-                    birthday_check_interval: Duration::from_secs(
-                        config.birthbot_birthday_check_interval,
-                    ),
+                    database: connect_mongodb(&config.cluster_uri, &config.database_name).await?,
+                    birthday_check_interval: Duration::from_secs(config.birthday_check_interval),
                 };
 
-                register_commands(
-                    context,
-                    &framework.options().commands,
-                    config.birthbot_test_guild_id,
-                )
-                .await?;
+                register_commands(context, &framework.options().commands, config.test_guild_id)
+                    .await?;
 
                 tasks::schedule_birthday_announcer(context.clone(), data.clone())?;
 

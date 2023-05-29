@@ -1,12 +1,11 @@
 [package]
 name = "birthbot"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4.24", features = ["serde"] }
-dotenvy = "0.15.7"
-envy = "0.4.2"
+clap = { version = "4.3.0", features = ["derive"] }
 log = "0.4.17"
 mongodm = "0.9.1"
 poise = "0.5.5"
