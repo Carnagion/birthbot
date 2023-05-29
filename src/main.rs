@@ -1,5 +1,5 @@
 use std::{
-    fs::File,
+    fs::{self, File},
     io::Error as IoError,
     num::ParseIntError,
     path::{Path, PathBuf},
@@ -35,12 +35,14 @@ struct BotConfig {
     cluster_uri: String,
     #[arg(short, long)]
     database_name: String,
-    #[arg(short = 'i', long, value_name = "SECONDS", default_value_t = 900)]
+    #[arg(long, value_name = "SECONDS", default_value_t = 900)]
     birthday_check_interval: u64,
-    #[arg(short = 'g', long, value_name = "GUILD_ID", value_parser = |value: &str| Ok::<_, ParseIntError>(GuildId(value.parse()?)))]
+    #[arg(long, value_name = "GUILD_ID", value_parser = |value: &str| value.parse().map(GuildId))]
     test_guild_id: Option<GuildId>,
-    #[arg(short, long, value_name = "FILE", default_value = "birthbot.log")]
+    #[arg(long, value_name = "FILE")]
     log_file: PathBuf,
+    #[arg(long, value_name = "FILE")]
+    updates_file: Option<PathBuf>,
 }
 
 #[derive(Debug, Snafu)]
@@ -63,6 +65,12 @@ async fn main() -> Result<(), StartupError> {
 
     init_logger(&config.log_file)?;
 
+    let updates = if let Some(updates_file) = config.updates_file {
+        Some(fs::read_to_string(updates_file)?)
+    } else {
+        None
+    };
+
     BotFramework::builder()
         .token(config.token)
         .intents(GatewayIntents::non_privileged())
@@ -82,6 +90,10 @@ async fn main() -> Result<(), StartupError> {
                     .await?;
 
                 tasks::schedule_birthday_announcer(context.clone(), data.clone())?;
+
+                if let Some(updates) = updates {
+                    tasks::announce_updates(context, &data, &updates).await?;
+                }
 
                 Ok(data)
             })

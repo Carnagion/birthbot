@@ -13,3 +13,4 @@ serde = { version = "1.0.163", features = ["derive"] }
 simplelog = "0.12.1"
 snafu = "0.7.4"
 tokio = "1.28.1"
+version = "3.0.0"
