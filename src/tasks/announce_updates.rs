@@ -27,7 +27,7 @@ async fn announce_update(context: &Context, guild_data: GuildData, updates: &str
                         .color(FUCHSIA)
                         .description("A new update has been released.")
                         .field("Version", format!("`{}`", version!()), true)
-                        .field("Changelog", updates, false)
+                        .field("Changelog", format!("```md\n{}\n```", updates), false)
                 })
             })
             .await?;
