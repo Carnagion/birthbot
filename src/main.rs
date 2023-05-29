@@ -45,10 +45,10 @@ struct BotConfig {
     #[arg(long, value_name = "GUILD_ID", value_parser = |value: &str| value.parse().map(GuildId))]
     test_guild_id: Option<GuildId>,
     /// Path to log file.
-    #[arg(long, value_name = "FILE")]
+    #[arg(short, long, value_name = "FILE")]
     log_file: PathBuf,
     /// Path to file listing new updates, if any.
-    #[arg(long, value_name = "FILE")]
+    #[arg(short, long, value_name = "FILE")]
     updates_file: Option<PathBuf>,
 }
 
