@@ -39,7 +39,7 @@ pub async fn next(
         .into_stream()
         .map_ok(|member_data| {
             (
-                member_data.user_id,
+                member_data,
                 member_data
                     .birthday
                     .0
@@ -69,10 +69,10 @@ pub async fn next(
             });
 
             // Sort birthdays and find the first one that comes after the current day
-            member_data.sort_unstable_by_key(|(_, birthday)| *birthday);
+            member_data.sort_unstable_by_key(|(_, birthday_utc)| *birthday_utc);
             let skip = member_data
                 .iter()
-                .position(|(_, birthday)| birthday > &now)
+                .position(|(_, birthday_utc)| birthday_utc > &now)
                 .unwrap_or(0); // If there are no birthdays after the current time this year, then pick the first birthday next year
 
             // Add members and their birthdays to the embed as fields
@@ -81,18 +81,12 @@ pub async fn next(
                 .cycle()
                 .skip(skip)
                 .take(limit as usize)
-                .fold(embed, |embed, (user_id, birthday)| {
-                    // Calculate the correct year if the birthday is supposed to be next year
-                    let birthday = if birthday < now {
-                        birthday.with_year(now.year() + 1).unwrap() // PANICS: Humanity will probably be gone before we reach the max year
-                    } else {
-                        birthday
-                    };
-
+                .map(|(member_data, _)| member_data)
+                .fold(embed, |embed, member_data| {
                     // Add the birthday as a field
                     embed.field(
                         "Birthday",
-                        format!("`{}` - <@{}>", Birthday::format(&birthday), user_id),
+                        format!("`{}` - <@{}>", member_data.birthday, member_data.user_id),
                         true,
                     )
                 })
