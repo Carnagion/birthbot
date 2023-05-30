@@ -1,6 +1,7 @@
 # Birthbot
 
 **Birthbot** is an open-source and ad-free Discord bot for keeping track of birthdays.
+[Add it to your server](https://discord.com/api/oauth2/authorize?client_id=1031249634020044860&permissions=2147485696&scope=bot%20applications.commands).
 
 # Commands
 
