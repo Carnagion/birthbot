@@ -1,86 +1,67 @@
-//! Generates and handles the `birthday get` sub-command.
+use mongodm::prelude::*;
 
-use mongodb::bson::Document;
+use poise::serenity_prelude::*;
 
-use serenity::builder::CreateApplicationCommandOption;
-use serenity::model::application::command::CommandOptionType;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::model::application::interaction::application_command::CommandDataOption;
-use serenity::model::user::User;
-use serenity::prelude::Context;
-use serenity::utils::Colour;
+use crate::prelude::{util::*, *};
 
-use crate::errors::BotError;
+/// Get the birthday of a user.
+#[poise::command(
+    slash_command,
+    guild_only,
+    ephemeral,
+    on_error = "util::report_framework_error"
+)]
+pub async fn get(
+    context: BotContext<'_>,
+    #[description = "Whose birthday to retrieve. Defaults to you."] user: Option<User>,
+) -> BotResult<()> {
+    // Defer the response to allow time for query execution
+    context.defer_ephemeral().await?;
 
-/// Generates the `birthday get` sub-command.
-pub fn create_birthday_get_subcommand(subcommand: &mut CreateApplicationCommandOption) -> &mut CreateApplicationCommandOption{
-    subcommand
-        .kind(CommandOptionType::SubCommand)
-        .name("get")
-        .description("Retrieve a user's birthday.")
-        .create_sub_option(|option| option
-            .kind(CommandOptionType::User)
-            .name("user")
-            .description("Whose birthday to get")
-            .required(false))
-}
+    let user_id = user.as_ref().unwrap_or(context.author()).id;
+    let guild_id = context.guild_id().unwrap(); // PANICS: Will always exist as the command is guild-only
 
-/// Handles the `birthday get` sub-command.
-///
-/// # Errors
-/// A [BotError] is returned in situations including but not limited to:
-/// - The sub-command option is not resolved or has an invalid value
-/// - There was an error connecting to or querying the database
-/// - There was an error responding to the command
-pub async fn handle_birthday_get_subcommand(subcommand: &CommandDataOption, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
-    // Retrieve command options
-    let user = require_command_user_option!(subcommand.options.get(0), "user", &command.user);
-    let guild = command.guild_id
-        .ok_or(BotError::UserError(String::from("This command can only be performed in a guild.")))?;
-    // Build query document
-    let query = bson_birthday!(user.id.0 as i64);
-    // Connect to database and find collection
-    let database = super::connect_mongodb().await?;
-    let collection = database.collection::<Document>(guild.to_string().as_str());
-    // Retrieve document
-    let result = collection
-        .find_one(query, None)
+    // Search the database for the requested member's birthday
+    let member_repo = context.data().database.repository::<MemberData>();
+    let member_data = member_repo
+        .find_one(
+            doc! {
+                field!(user_id in MemberData): user_id.to_bson()?,
+                field!(guild_id in MemberData): guild_id.to_bson()?,
+            },
+            None,
+        )
         .await?;
-    respond_birthday_get(result, user, command, context)
-        .await
-}
 
-async fn respond_birthday_get(result: Option<Document>, user: &User, command: &ApplicationCommandInteraction, context: &Context) -> Result<(), BotError> {
-    match result {
-        // If query returned nothing, birthday has not been set yet
+    match member_data {
+        // Display the retrieved birthday
+        Some(member_data) => {
+            embed(&context, true, |embed| {
+                embed
+                    .success()
+                    .description(if user_id == context.author().id {
+                        "Your birthday was successfully retrieved.".to_owned()
+                    } else {
+                        format!("<@{}>'s birthday was successfully retrieved.", user_id)
+                    })
+                    .field("Birthday", format!("`{}`", member_data.birthday), true)
+            })
+            .await
+        },
+        // Report the absence of a birthday for the requested member
         None => {
-            let description = if user.id == command.user.id {
-                String::from("You haven't set a birthday yet.")
-            } else {
-                format!("<@{}> hasn't set a birthday yet.", user.id)
-            };
-            command_response!(command, context, |data| data
-                .ephemeral(true)
-                .embed(|embed| embed
-                    .title("Error")
-                    .description(description)
-                    .colour(Colour::from_rgb(237, 66, 69))))
+            embed(&context, true, |embed| {
+                embed
+                    .unchanged()
+                    .description(if user_id == context.author().id {
+                        "You haven't set a birthday yet.".to_owned()
+                    } else {
+                        format!("<@{}> hasn't set a birthday yet.", user_id)
+                    })
+            })
+            .await
         },
-        // If query returned a document, parse and show the birthday
-        Some(document) => {
-            let date = super::get_birthday(&document)?;
-            let description = if user.id == command.user.id {
-                String::from("Your birthday was successfully retrieved.")
-            } else {
-                format!("<@{}>'s birthday was successfully retrieved.", user.id)
-            };
-            command_response!(command, context, |data| data
-                .ephemeral(true)
-                .embed(|embed| embed
-                    .title("Success")
-                    .description(description)
-                    .field("Birthday", date.date(), true)
-                    .colour(Colour::from_rgb(87, 242, 135))))
-        },
-    }
+    }?;
+
+    Ok(())
 }

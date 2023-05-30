@@ -1,15 +1,22 @@
 [package]
 name = "birthbot"
-version = "0.1.0"
+description = "An open-source and ad-free Discord bot for keeping track of birthdays."
+version = "0.3.0"
 edition = "2021"
+authors = ["Indraneel Mahendrakumar"]
+repository = "https://github.com/Carnagion/birthbot"
+documentation = "https://docs.rs/birthbot"
+readme = "README.md"
+license = "MIT"
 
 [dependencies]
-chrono = "0.4.22"
-dotenv = "0.15.0"
-mongodb = "2.3.1"
-serenity = { version = "0.11", default-features = false, features = ["client", "gateway", "rustls_backend", "model"] }
-tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
-
-[features]
-default = []
-guild = []
+chrono = { version = "0.4.24", features = ["serde"] }
+clap = { version = "4.3.0", features = ["derive"] }
+log = "0.4.17"
+mongodm = "0.9.1"
+poise = "0.5.5"
+serde = { version = "1.0.163", features = ["derive"] }
+simplelog = "0.12.1"
+snafu = "0.7.4"
+tokio = "1.28.1"
+version = "3.0.0"
