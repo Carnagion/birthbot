@@ -30,11 +30,24 @@ impl Birthday {
         datetime.format(Self::DISPLAY_FORMAT)
     }
 
-    fn parse_from_parts(
-        date: &str,
-        time: Option<&str>,
-        timezone: Option<&str>,
-    ) -> Result<Self, ParseError> {
+    /// Parses a "human readable" date, following the British convention of `<day> <month> <year>`.
+    /// You can also optionally include the 24-hour time and the timezone offset, separated by commas.
+    ///
+    /// These are some examples of some valid human readable dates:
+    /// - `1 November 2007`
+    /// - `19 July 2002, 01:13`
+    /// - `23 June 1996, 14:35, +09:00`
+    ///
+    /// # Errors
+    ///
+    /// If the input string is empty, [`BirthdayParseError::Empty`] will be returned.
+    /// Otherwise, [`BirthdayParseError::Invalid`] will be returned if the input string isn't valid.
+    fn parse_human_date(string: &str) -> Result<Self, BirthdayParseError> {
+        let mut split = string.splitn(3, ',');
+        let (Some(date), time, timezone) = (split.next(), split.next(), split.next()) else {
+            return Err(BirthdayParseError::Empty)
+        };
+
         let mut parsed = Parsed::new();
 
         format::parse(&mut parsed, date.trim(), StrftimeItems::new("%d %B %Y"))?;
@@ -81,11 +94,6 @@ impl FromStr for Birthday {
     type Err = BirthdayParseError;
 
     fn from_str(string: &str) -> Result<Self, Self::Err> {
-        let mut split = string.splitn(3, ',');
-        let birthday = match (split.next(), split.next(), split.next()) {
-            (Some(date), time, timezone) => Self::parse_from_parts(date, time, timezone)?,
-            _ => Err(BirthdayParseError::Empty)?,
-        };
-        Ok(birthday)
+        Self::parse_human_date(string)
     }
 }
