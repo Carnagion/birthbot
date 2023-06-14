@@ -119,10 +119,10 @@ impl Display for Birthday {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Snafu)]
 pub enum BirthdayParseError {
     /// The input was empty.
-    #[snafu(display("Input is empty"))]
+    #[snafu(display("Input is empty."))]
     Empty,
     /// The input was formatted incorrectly.
-    #[snafu(context(false), display("{}", source))]
+    #[snafu(context(false), display("Invalid birthday format ({}). Valid formats include RFC-3339 (such as `2007-11-01`, `2002-07-19T01:13`, or `1996-06-23T14:35+09:00`) and day-month-year (such as `1 November 2007`, `19 July 2002, 01:13`, or `23 June 1996, 14:35, +09:00`).", source))]
     Invalid {
         /// The underlying source of the parsing error.
         source: ParseError,
