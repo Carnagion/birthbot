@@ -40,12 +40,15 @@ impl Birthday {
     ///
     /// # Errors
     ///
-    /// If the input string is empty, [`BirthdayParseError::Empty`] will be returned.
-    /// Otherwise, [`BirthdayParseError::Invalid`] will be returned if the input string isn't valid.
-    fn parse_human_date(string: &str) -> Result<Self, BirthdayParseError> {
+    /// If the input string is empty, [`ParseBirthdayError
+    /// ::Empty`] will be returned.
+    /// Otherwise, [`ParseBirthdayError
+    /// ::Invalid`] will be returned if the input string isn't valid.
+    fn parse_human_date(string: &str) -> Result<Self, ParseBirthdayError> {
         let mut split = string.splitn(3, ',');
         let (Some(date), time, timezone) = (split.next(), split.next(), split.next()) else {
-            return Err(BirthdayParseError::Empty)
+            return Err(ParseBirthdayError
+                ::Empty)
         };
 
         let mut parsed = Parsed::new();
@@ -79,13 +82,15 @@ impl Birthday {
     ///
     /// # Errors
     ///
-    /// If the input string is empty, [`BirthdayParseError::Empty`] will be returned.
-    /// Otherwise, [`BirthdayParseError::Invalid`] will be returned if the input string isn't valid.
-    fn parse_rfc3339_date(string: &str) -> Result<Self, BirthdayParseError> {
+    /// If the input string is empty, [`ParseBirthdayError
+    /// ::Empty`] will be returned.
+    /// Otherwise, [`ParseBirthdayError
+    /// ::Invalid`] will be returned if the input string isn't valid.
+    fn parse_rfc3339_date(string: &str) -> Result<Self, ParseBirthdayError> {
         let string = string.trim();
 
         if string.is_empty() {
-            return Err(BirthdayParseError::Empty);
+            return Err(ParseBirthdayError::Empty);
         }
 
         // Attempt to parse the date, time, and timezone offset.
@@ -117,7 +122,7 @@ impl Display for Birthday {
 
 /// Possible errors that can arise while parsing a [`Birthday`].
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Snafu)]
-pub enum BirthdayParseError {
+pub enum ParseBirthdayError {
     /// The input was empty.
     #[snafu(display("Input is empty."))]
     Empty,
@@ -130,7 +135,7 @@ pub enum BirthdayParseError {
 }
 
 impl FromStr for Birthday {
-    type Err = BirthdayParseError;
+    type Err = ParseBirthdayError;
 
     fn from_str(string: &str) -> Result<Self, Self::Err> {
         // Attempts a human readable date first, then falls back to an RFC 3339 date.
