@@ -1,12 +1,14 @@
-use std::{fmt::Debug, time::Duration};
+use std::{fmt::Debug, io::Error as IoError, path::PathBuf, time::Duration};
 
 use chrono::OutOfRangeError;
 
 use mongodm::prelude::*;
 
-use poise::serenity_prelude::Error as DiscordError;
+use poise::serenity_prelude as serenity;
 
-use snafu::Snafu;
+use serenity::*;
+
+use snafu::prelude::*;
 
 /// Possible errors that could be produced during execution of a bot command or long-running task.
 #[derive(Debug, Snafu)]
@@ -22,7 +24,7 @@ pub enum BotError {
     #[snafu(context(false), display("discord error: {}", source))]
     Discord {
         /// The underlying source of the Discord error.
-        source: DiscordError,
+        source: SerenityError,
     },
     /// A value could not be serialized to BSON.
     #[snafu(display("could not serialize {} to BSON: {}", debug, source))]
@@ -39,5 +41,13 @@ pub enum BotError {
         source: OutOfRangeError,
         /// The duration in question.
         duration: Duration,
+    },
+    /// A file could not be opened or read.
+    #[snafu(display("failed to open or read data from {}: {}", path.display(), source))]
+    File {
+        /// The underlying source of the file error.
+        source: IoError,
+        /// The path of the file trying to be opened or read.
+        path: PathBuf,
     },
 }

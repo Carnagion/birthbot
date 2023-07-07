@@ -1,3 +1,5 @@
+//! Re-exports of commonly used items.
+
 use poise::{Command, Context, Framework, FrameworkError};
 
 pub use crate::{
@@ -5,6 +7,7 @@ pub use crate::{
     config::*,
     error::*,
     model::{Birthday, GuildData, MemberData},
+    Birthbot,
 };
 
 /// Commonly used helper functions and extension traits.
