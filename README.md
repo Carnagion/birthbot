@@ -14,6 +14,7 @@
 - `birthday channel get` - Get the birthday announcement channel
 - `birthday channel set` - Set the birthday announcement channel
 - `birthday channel unset` - Remove the birthday announcement channel
+- `birthday help` - Display help and information on how to use the commands
 
 **Birthbot** regularly scans its database for birthdays occurring around the current time, and announces them in the relevant guilds if birthday announcement channels have been provided.
 
