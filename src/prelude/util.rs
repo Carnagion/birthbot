@@ -24,7 +24,7 @@ pub trait CreateEmbedExt {
     fn success(&mut self) -> &mut Self;
 
     /// Modifies an embed to have a border colour and title representing the lack of any significant change in data.
-    fn unchanged(&mut self) -> &mut Self;
+    fn unavailable(&mut self) -> &mut Self;
 
     /// Modifies an embed to have a border colour and title representing a failed operation.
     fn error(&mut self) -> &mut Self;
@@ -35,8 +35,8 @@ impl CreateEmbedExt for CreateEmbed {
         self.title("Success").colour(POSITIVE)
     }
 
-    fn unchanged(&mut self) -> &mut Self {
-        self.title("Unchanged").colour(BLURPLE)
+    fn unavailable(&mut self) -> &mut Self {
+        self.title("Unavailable").colour(BLURPLE)
     }
 
     fn error(&mut self) -> &mut Self {

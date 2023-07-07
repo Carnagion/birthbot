@@ -35,7 +35,7 @@ pub async fn unset(context: BotContext<'_>) -> BotResult<()> {
         // Report the absence of a birthday channel for the guild
         util::embed(&context, true, |embed| {
             embed
-                .unchanged()
+                .unavailable()
                 .description("The birthday channel hasn't been set yet.")
         })
         .await

@@ -52,7 +52,7 @@ pub async fn get(
         None => {
             embed(&context, true, |embed| {
                 embed
-                    .unchanged()
+                    .unavailable()
                     .description(if user_id == context.author().id {
                         "You haven't set a birthday yet.".to_owned()
                     } else {

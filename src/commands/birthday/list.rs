@@ -46,7 +46,7 @@ pub async fn list(
         // Report absence of birthdays
         util::embed(&context, true, |embed| {
             embed
-                .unchanged()
+                .unavailable()
                 .description("There are no birthdays to list.")
         })
         .await

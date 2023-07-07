@@ -42,7 +42,7 @@ pub async fn get(context: BotContext<'_>) -> BotResult<()> {
         None => {
             util::embed(&context, true, |embed| {
                 embed
-                    .unchanged()
+                    .unavailable()
                     .description("The birthday channel hasn't been set yet.")
             })
             .await

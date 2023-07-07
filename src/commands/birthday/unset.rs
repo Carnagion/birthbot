@@ -32,7 +32,7 @@ pub async fn unset(context: BotContext<'_>) -> BotResult<()> {
         // Report the absence of the member's birthday
         util::embed(&context, true, |embed| {
             embed
-                .unchanged()
+                .unavailable()
                 .description("You haven't set a birthday yet.")
         })
         .await
