@@ -1,10 +1,9 @@
 use poise::{Command, Context, Framework, FrameworkError};
 
 pub use crate::{
-    birthday::Birthday,
     bot_data::*,
     error::*,
-    model::{GuildData, MemberData},
+    model::{Birthday, GuildData, MemberData},
 };
 
 /// Commonly used helper functions and extension traits.

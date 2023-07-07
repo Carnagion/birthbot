@@ -5,9 +5,6 @@
 /// Re-exports of commonly used items.
 pub mod prelude;
 
-/// Birthday-related types and functions.
-pub mod birthday;
-
 /// Member and guild data models used by the bot.
 pub mod model;
 
