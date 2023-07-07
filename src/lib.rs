@@ -5,6 +5,8 @@
 /// Re-exports of commonly used items.
 pub mod prelude;
 
+pub mod config;
+
 /// Member and guild data models used by the bot.
 pub mod model;
 

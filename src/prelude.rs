@@ -2,6 +2,7 @@ use poise::{Command, Context, Framework, FrameworkError};
 
 pub use crate::{
     bot_data::*,
+    config::*,
     error::*,
     model::{Birthday, GuildData, MemberData},
 };

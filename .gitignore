@@ -1,11 +1,12 @@
-# Rust
+# Secrets and configuration
+.env
+birthbot.toml
+
+# Cargo
 target/
 
 # JetBrains
 .idea/
 
-# Environment variables
-.env
-
-# Log files
+# Logs
 *.log
