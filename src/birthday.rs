@@ -47,8 +47,7 @@ impl Birthday {
     fn parse_human_date(string: &str) -> Result<Self, ParseBirthdayError> {
         let mut split = string.splitn(3, ',');
         let (Some(date), time, timezone) = (split.next(), split.next(), split.next()) else {
-            return Err(ParseBirthdayError
-                ::Empty)
+            return Err(ParseBirthdayError::Empty)
         };
 
         let mut parsed = Parsed::new();
@@ -107,8 +106,7 @@ impl Birthday {
             NaiveTime::parse_from_str(remainder, "T%H:%M:%S")?
         };
 
-        // PANICS: A zero timezone offset will always be valid.
-        let offset: FixedOffset = FixedOffset::east_opt(0).unwrap();
+        let offset: FixedOffset = FixedOffset::east_opt(0).unwrap(); // PANICS: A zero timezone offset will always be valid
         let datetime = DateTime::from_utc(NaiveDateTime::new(date, time), offset);
         Ok(Self(datetime))
     }
@@ -124,21 +122,45 @@ impl Display for Birthday {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Snafu)]
 pub enum ParseBirthdayError {
     /// The input was empty.
-    #[snafu(display("Input is empty."))]
+    #[snafu(display("input is empty"))]
     Empty,
     /// The input was formatted incorrectly.
-    #[snafu(context(false), display("Invalid birthday format ({}). Valid formats include RFC-3339 (such as `2007-11-01`, `2002-07-19T01:13`, or `1996-06-23T14:35+09:00`) and day-month-year (such as `1 November 2007`, `19 July 2002, 01:13`, or `23 June 1996, 14:35, +09:00`).", source))]
+    #[snafu(context(false), display("{}.", source))]
     Invalid {
         /// The underlying source of the parsing error.
         source: ParseError,
     },
 }
 
+/// A combination of errors that can arise when trying multiple strategies of parsing a [`Birthday`].
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Snafu)]
+#[snafu(display("Invalid birthday format ({}).
+Valid formats include RFC-3339 (such as `2007-11-01`, `2002-07-19T01:13`, or `1996-06-23T14:35+09:00`) and day-month-year (such as `1 November 2007`, `19 July 2002, 01:13`, or `23 June 1996, 14:35, +09:00`).",
+rest.into_iter().map(|err| err.to_string()).fold(first.to_string(), |mut string, err| {
+    string.push_str(" or ");
+    string.push_str(&err);
+    string
+})))]
+pub struct ParseCombinedBirthdayError {
+    first: ParseBirthdayError,
+    rest: Vec<ParseBirthdayError>,
+}
+
 impl FromStr for Birthday {
-    type Err = ParseBirthdayError;
+    type Err = ParseCombinedBirthdayError;
 
     fn from_str(string: &str) -> Result<Self, Self::Err> {
         // Attempts a human readable date first, then falls back to an RFC 3339 date.
-        Self::parse_human_date(string).or_else(|_| Self::parse_rfc3339_date(string))
+        Self::parse_human_date(string)
+            .map_err(|human_err| ParseCombinedBirthdayError {
+                first: human_err,
+                rest: vec![],
+            })
+            .or_else(|mut err| {
+                Self::parse_rfc3339_date(string).map_err(|rfc_err| {
+                    err.rest.push(rfc_err);
+                    err
+                })
+            })
     }
 }
