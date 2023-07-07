@@ -2,6 +2,9 @@
 
 use crate::prelude::*;
 
+mod help;
+pub use help::*;
+
 mod get;
 pub use get::*;
 
@@ -25,7 +28,7 @@ pub use channel::channel;
 /// This command cannot actually be called by itself - it requires a subcommand.
 #[poise::command(
     slash_command,
-    subcommands("get", "set", "unset", "list", "next", "channel"),
+    subcommands("help", "get", "set", "unset", "list", "next", "channel"),
     guild_only,
     on_error = "util::report_framework_error"
 )]
