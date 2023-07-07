@@ -1,3 +1,5 @@
+//! Birthday-related commands.
+
 use crate::prelude::*;
 
 mod get;

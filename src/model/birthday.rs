@@ -1,3 +1,5 @@
+//! Core birthday-related types, including parsing and display implementations.
+
 use std::{
     fmt::{Display, Formatter, Result as FmtResult},
     str::FromStr,
@@ -11,7 +13,7 @@ use chrono::{
 
 use serde::{Deserialize, Serialize};
 
-use snafu::Snafu;
+use snafu::prelude::*;
 
 /// A birthday represented as a date and time with a specific timezone.
 #[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]

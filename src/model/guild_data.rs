@@ -1,8 +1,12 @@
-use mongodm::{prelude::*, Indexes};
+//! Models for guild data and configuration.
 
-use poise::serenity_prelude::*;
+use mongodm::prelude::*;
+
+use poise::serenity_prelude as serenity;
 
 use serde::{Deserialize, Serialize};
+
+use serenity::*;
 
 /// Configuration-related data of a guild.
 #[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]

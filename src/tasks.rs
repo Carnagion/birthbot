@@ -1,3 +1,5 @@
+//! Long-running tasks provided by the bot.
+
 mod announce_birthdays;
 pub use announce_birthdays::*;
 

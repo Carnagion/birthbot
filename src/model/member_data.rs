@@ -1,8 +1,12 @@
-use mongodm::{prelude::*, Indexes};
+//! Models for member data.
 
-use poise::serenity_prelude::*;
+use mongodm::prelude::*;
+
+use poise::serenity_prelude as serenity;
 
 use serde::{Deserialize, Serialize};
+
+use serenity::*;
 
 use crate::prelude::*;
 
