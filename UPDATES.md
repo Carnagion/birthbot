@@ -1,34 +1,13 @@
 # Slash commands
 
-Renamed `birthday announce` to `birthday channel set`.
-- Restricted to users who can manage channels.
-
-Renamed `birthday unannounce` to `birthday channel unset`.
-- Restricted to users who can manage channels.
-
-Added `birthday channel get`.
-
-Improved error messages and response embeds.
+Added `birthday help`.
 
 # Birthday format
 
-Improved time and timezone support.
-
-Added support for human-readable strings when using `birthday set` or displaying birthdays.
-- Accepts input such as `17 June 2008` or `17 June 2008, 21:57, +01:00`.
-
-# Birthday announcements
-
-Improved default frequency of birthday checks.
-- Checks happen every 15 minutes instead of every 24 hours.
-
-# User data
-
-Improved data model and storage schemas.
+Added support for the RFC-3339 time format when using `birthday set`.
+- Accepts input such as `2007-11-01`, `2002-07-19T01:13`, or `1996-06-23T14:35+09:00`.
 
 # Miscellaneous
 
-Added support for displaying changelogs on updates.
-- Announced only if a birthday channel is set.
-
-Changed arguments to be read from the command line rather than environment variables.
+Changed configuration format to TOML.
+- No more environment variables or long command-line arguments.
