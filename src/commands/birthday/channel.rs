@@ -1,3 +1,5 @@
+//! Commands for birthday channel configuration.
+
 use crate::prelude::*;
 
 mod get;
