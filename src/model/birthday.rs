@@ -49,7 +49,7 @@ impl Birthday {
     fn parse_human_date(string: &str) -> Result<Self, ParseBirthdayError> {
         let mut split = string.splitn(3, ',');
         let (Some(date), time, timezone) = (split.next(), split.next(), split.next()) else {
-            return Err(ParseBirthdayError::Empty)
+            return Err(ParseBirthdayError::Empty);
         };
 
         let mut parsed = Parsed::new();

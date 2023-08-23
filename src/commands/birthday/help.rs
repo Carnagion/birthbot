@@ -30,7 +30,7 @@ Defaults to your birthday if no user is specified.",
 ```less
 /birthday set [BIRTHDAY]
 ```
-Birthdays must be in RFC-3339 or `[DAY] [MONTH] [YEAR]` format, with an optional time and timezone. \
+Birthdays must be in RFC-3339 or `[DAY] [MONTH] [YEAR]` format, with an optional time and timezone.
 For example:
 - `1 November 2007`
 - `19 June 2002, 01:13`
