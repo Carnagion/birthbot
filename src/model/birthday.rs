@@ -138,7 +138,7 @@ pub enum ParseBirthdayError {
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Snafu)]
 #[snafu(display("Invalid birthday format ({}).
 Valid formats include RFC-3339 (such as `2007-11-01`, `2002-07-19T01:13`, or `1996-06-23T14:35+09:00`) and day-month-year (such as `1 November 2007`, `19 July 2002, 01:13`, or `23 June 1996, 14:35, +09:00`).",
-rest.into_iter().map(|err| err.to_string()).fold(first.to_string(), |mut string, err| {
+rest.iter().map(|err| err.to_string()).fold(first.to_string(), |mut string, err| {
     string.push_str(" or ");
     string.push_str(&err);
     string
