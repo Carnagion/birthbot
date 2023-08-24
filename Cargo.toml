@@ -1,13 +1,13 @@
 [package]
+name = "birthbot"
+version = "0.3.2"
+edition = "2021"
 authors = ["Indraneel Mahendrakumar"]
 description = "An open-source and ad-free Discord bot for keeping track of birthdays."
-documentation = "https://docs.rs/birthbot"
-edition = "2021"
-license = "MIT"
-name = "birthbot"
 readme = "README.md"
 repository = "https://github.com/Carnagion/birthbot"
-version = "0.3.2"
+documentation = "https://docs.rs/birthbot"
+license = "MIT"
 
 [dependencies]
 anyhow = "1.0.71"
