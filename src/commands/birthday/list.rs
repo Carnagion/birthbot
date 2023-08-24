@@ -42,7 +42,7 @@ pub async fn list(
         .try_collect::<Vec<_>>()
         .await?;
 
-    if member_data.len() == 0 {
+    if member_data.is_empty() {
         // Report absence of birthdays
         util::embed(&context, true, |embed| {
             embed

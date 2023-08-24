@@ -1,13 +1,3 @@
-# Slash commands
+# Bugfixes
 
-Added `birthday help`.
-
-# Birthday format
-
-Added support for RFC-3339 when using `birthday set`.
-- Accepts input such as `2007-11-01`, `2002-07-19T01:13`, or `1996-06-23T14:35+09:00`.
-
-# Miscellaneous
-
-Changed configuration format to TOML.
-- No more environment variables or long command-line arguments.
+Fixed off-by-one error when calculating age for birthdays.
