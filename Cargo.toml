@@ -10,14 +10,15 @@ documentation = "https://docs.rs/birthbot"
 license = "MIT"
 
 [dependencies]
-anyhow = "1.0.71"
-chrono = {version = "0.4.26", features = ["serde"]}
-log = "0.4.17"
-mongodm = "0.9.1"
-poise = "0.5.5"
-serde = {version = "1.0.163", features = ["derive"]}
-simplelog = "0.12.1"
-snafu = "0.7.4"
-tokio = "1.28.1"
-toml = "0.7.6"
-version = "3.0.0"
+anyhow = { version = "1.0.98", features = ["backtrace"] }
+# NOTE: I prefer `jiff` but both `chrono` and `time` are already in our 250+ crate dependency tree thanks to `serenity` >:(
+chrono = { version = "0.4.40", default-features = false, features = ["clock", "std"] }
+figment = { version = "0.10.19", features = ["toml", "env"] }
+poise = "0.6.1"
+rusqlite = { version = "0.34.0", features = ["bundled", "chrono", "functions"] }
+serde = { version = "1.0.219", features = ["derive"] }
+thiserror = "2.0.12"
+tokio = { version = "1.44.1", features = ["rt-multi-thread"] }
+tracing = "0.1.41"
+tracing-appender = "0.2.3"
+tracing-subscriber = "0.3.19"
