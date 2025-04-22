@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use chrono::{Datelike, Utc};
+use chrono::Datelike;
 
 use figment::{
     providers::{Env, Format, Toml},
@@ -250,31 +250,19 @@ async fn on_error(err: FrameworkError<'_, State, Error>) -> Result<()> {
 }
 
 fn success(title: &str) -> CreateEmbed {
-    CreateEmbed::default()
-        .colour(POSITIVE)
-        .title(title)
-        .timestamp(Utc::now())
+    CreateEmbed::default().colour(POSITIVE).title(title)
 }
 
 fn neutral(title: &str) -> CreateEmbed {
-    CreateEmbed::default()
-        .colour(BLURPLE)
-        .title(title)
-        .timestamp(Utc::now())
+    CreateEmbed::default().colour(BLURPLE).title(title)
 }
 
 fn failure(title: &str) -> CreateEmbed {
-    CreateEmbed::default()
-        .colour(DANGER)
-        .title(title)
-        .timestamp(Utc::now())
+    CreateEmbed::default().colour(DANGER).title(title)
 }
 
 fn announcement(title: &str) -> CreateEmbed {
-    CreateEmbed::default()
-        .colour(FUCHSIA)
-        .title(title)
-        .timestamp(Utc::now())
+    CreateEmbed::default().colour(FUCHSIA).title(title)
 }
 
 fn reply(embed: CreateEmbed) -> CreateReply {
