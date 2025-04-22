@@ -116,7 +116,7 @@ async fn setup(
     conn.prepare(include_str!("../init/create-announcements.sql"))?
         .execute(())?;
 
-    // Register custom functions used for sorting birthdays (see `birthday::list` and `birthday::next`)
+    // Register custom functions used for sorting birthdays (see `birthday::list`)
     let flags = FunctionFlags::SQLITE_DETERMINISTIC | FunctionFlags::SQLITE_INNOCUOUS;
     conn.create_scalar_function("day", 1, flags, |ctx| {
         let birthday = ctx.get(0).map(Birthday)?;

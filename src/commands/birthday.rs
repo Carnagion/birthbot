@@ -255,8 +255,10 @@ pub async fn list(ctx: Context<'_>) -> Result<()> {
             writeln!(&mut field, "<@{}> (`{}`)", user_id, birthday).unwrap();
         }
 
-        let month_name = chrono::Month::try_from(month as u8).unwrap().name();
-        fields.push((month_name, field, false));
+        if month != 0 {
+            let month_name = chrono::Month::try_from(month as u8).unwrap().name();
+            fields.push((month_name, field, false));
+        }
 
         Ok::<_, Error>(fields)
     })?;
@@ -289,48 +291,50 @@ pub async fn next(
     // TODO: Use pagination to allow displaying more birthdays overall
     let mut upcoming = task::block_in_place(|| {
         let conn = ctx.data().conn.lock().unwrap();
-        let query = "select user_id, birthday from birthdays where guild_id = ?1 order by \
-                     month(birthday), day(birthday)";
+        let query = "select user_id, birthday from birthdays where guild_id = ?1";
         let mut stmt = conn.prepare(query)?;
         let mut rows = stmt.query((guild_id.get() as i64,))?; // NOTE: See the note in `birthday::get`.
 
-        let now = Utc::now().fixed_offset();
         let mut upcoming = Vec::new();
         while let Some(row) = rows.next()? {
             // NOTE: See the note in `birthday::get`.
             let user_id = row.get(0).map(|id: i64| UserId::new(id as u64))?;
             let birthday = row.get(1).map(Birthday)?;
-
-            // NOTE: See the note in `announce.rs`.
-            let years = now.years_since(birthday.0).unwrap(); // PANICS: Birthdays are always in the past
-            let last_birthday = birthday
-                .0
-                .checked_add_months(Months::new(years * 12))
-                .unwrap();
-
-            upcoming.push((user_id, birthday, last_birthday));
+            upcoming.push((user_id, birthday));
         }
 
         Ok::<_, Error>(upcoming)
     })?;
 
-    upcoming.sort_by_key(|(_, _, last_birthday)| *last_birthday);
+    let now = Utc::now().fixed_offset();
+    upcoming.sort_by_cached_key(|(_, birthday)| {
+        // NOTE: See the note in `announce.rs`.
+        let years = now.years_since(birthday.0).unwrap(); // PANICS: Birthdays are always in the past
+        let last_birthday = birthday
+            .0
+            .checked_add_months(Months::new(years * 12))
+            .unwrap();
+        last_birthday
+    });
 
     let limit = limit.unwrap_or(1);
-    let upcoming = upcoming.into_iter().take(limit).fold(
-        String::new(),
-        |mut field, (user_id, birthday, _)| {
-            writeln!(&mut field, "<@{}> (`{}`)", user_id, birthday).unwrap();
-            field
-        },
-    );
+    let len = upcoming.len().min(limit);
 
-    let embed = match upcoming.len() {
+    let field =
+        upcoming
+            .into_iter()
+            .take(limit)
+            .fold(String::new(), |mut field, (user_id, birthday)| {
+                writeln!(&mut field, "<@{}> (`{}`)", user_id, birthday).unwrap();
+                field
+            });
+
+    let embed = match len {
         0 => neutral("Birthdays unavailable").description("No birthdays have been set yet."),
         1 => success("Birthdays retrieved").description("Showing 1 birthday."),
         n => success("Birthdays retrieved").description(format!("Showing {} birthdays.", n)),
     }
-    .field("Upcoming birthdays", upcoming, false);
+    .field("Upcoming birthdays", field, false);
 
     ctx.send(reply(embed)).await?;
 
