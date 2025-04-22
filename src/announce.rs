@@ -116,10 +116,9 @@ fn queue_birthday_announcements(data: &State, tx: Sender<Announcement>) -> Resul
                 "select channel_id from announcements where guild_id = ?1 and channel_id is not \
                  null",
             )?
-            .query((guild_id.get(),))?
+            .query((guild_id.get() as i64,))? // NOTE: See the note in `birthday::get`.
             .next()?
-        // NOTE: See the note in `birthday::get`.
-            .map(|row| row.get(0).map(|id: i64| ChannelId::new(id as u64)))
+            .map(|row| row.get(0).map(|id: i64| ChannelId::new(id as u64))) // NOTE: See the note in `birthday::get`.
             .transpose()?;
 
         let Some(channel_id) = channel_id else {
