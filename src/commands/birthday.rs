@@ -267,10 +267,14 @@ pub async fn list(ctx: Context<'_>) -> Result<()> {
         0 => neutral("Birthdays unavailable").description("No birthdays have been set yet."),
         1 => success("Birthdays retrieved").description("Showing 1 birthday."),
         n => success("Birthdays retrieved").description(format!("Showing {} birthdays.", n)),
-    }
-    .fields(fields);
+    };
 
-    ctx.send(reply(embed)).await?;
+    ctx.send(reply(if fields.is_empty() {
+        embed
+    } else {
+        embed.fields(fields)
+    }))
+    .await?;
 
     Ok(())
 }
@@ -333,10 +337,14 @@ pub async fn next(
         0 => neutral("Birthdays unavailable").description("No birthdays have been set yet."),
         1 => success("Birthdays retrieved").description("Showing 1 birthday."),
         n => success("Birthdays retrieved").description(format!("Showing {} birthdays.", n)),
-    }
-    .field("Upcoming birthdays", field, false);
+    };
 
-    ctx.send(reply(embed)).await?;
+    ctx.send(reply(if len == 0 {
+        embed
+    } else {
+        embed.field("Upcoming birthdays", field, false)
+    }))
+    .await?;
 
     Ok(())
 }
