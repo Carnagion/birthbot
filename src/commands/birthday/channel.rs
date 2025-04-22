@@ -53,7 +53,7 @@ pub async fn get(ctx: Context<'_>) -> Result<()> {
     slash_command,
     guild_only,
     ephemeral,
-    required_permissions = "MANAGE_CHANNELS"
+    required_permissions = "ADMINISTRATOR"
 )]
 pub async fn set(
     ctx: Context<'_>,
