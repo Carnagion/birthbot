@@ -11,6 +11,7 @@ use tokio::task;
 use tracing::warn;
 
 use crate::{
+    announcement,
     birthday::{Birthday, Month},
     error::{Error, Result},
     failure,
@@ -346,6 +347,100 @@ pub async fn next(
     }))
     .await?;
 
+    Ok(())
+}
+
+#[poise::command(slash_command, guild_only, ephemeral)]
+#[tracing::instrument]
+pub async fn help(ctx: Context<'_>) -> Result<()> {
+    let embed = announcement("Help")
+        .description("Here's a list of available commands.")
+        .field(
+            "Display a user's birthday",
+            "\
+```less
+/birthday get [user?]
+```
+`[user?]` defaults to you if not specified.
+",
+            false,
+        )
+        .field(
+            "Set your birthday",
+            "\
+```less
+/birthday set [day] [month] [year] [hour?] [minute?] [second?] [timezone?]  
+```
+`[hour?]`, `[minute?]`, and `[second?]` default to 0 if not specified.
+`[timezone?]` defaults to UTC (`+00:00`) if not specified.
+",
+            false,
+        )
+        .field(
+            "Remove your birthday",
+            "\
+```less
+/birthday unset
+```
+",
+            false,
+        )
+        .field(
+            "List all birthdays",
+            "\
+```less
+/birthday list
+```
+",
+            false,
+        )
+        .field(
+            "List upcoming birthdays",
+            "\
+```less
+/birthday next [limit?]
+```
+`[limit?]` defaults to 1 if not specified.
+",
+            false,
+        )
+        .field(
+            "Display the birthday announcement channel",
+            "\
+```less
+/birthday channel get
+```
+",
+            false,
+        )
+        .field(
+            "Set the birthday announcement channel",
+            "\
+```less
+/birthday channel set [channel]
+```
+",
+            false,
+        )
+        .field(
+            "Remove the birthday announcement channel",
+            "\
+```less
+/birthday channel unset
+```
+",
+            false,
+        )
+        .field(
+            "Show this help message",
+            "\
+```less
+/birthday help
+```
+",
+            false,
+        );
+    ctx.send(reply(embed)).await?;
     Ok(())
 }
 

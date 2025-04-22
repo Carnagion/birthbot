@@ -16,6 +16,7 @@ pub mod birthday;
         "birthday::list",
         "birthday::next",
         "birthday::channel",
+        "birthday::help",
     )
 )]
 pub async fn birthday(_: Context<'_>) -> Result<()> {
