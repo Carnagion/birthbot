@@ -9,4 +9,7 @@ target/
 .idea/
 
 # Logs
-*.log
+logs/
+
+# Local database files
+*.db
