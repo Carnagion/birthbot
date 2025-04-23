@@ -10,37 +10,37 @@ use std::{
 use chrono::Datelike;
 
 use figment::{
-    providers::{Env, Format, Toml},
     Figment,
+    providers::{Env, Format, Toml},
 };
 
 use poise::{
-    serenity_prelude as serenity,
     CreateReply,
     Framework,
     FrameworkError,
     FrameworkOptions,
+    serenity_prelude as serenity,
 };
 
-use rusqlite::{functions::FunctionFlags, Connection};
+use rusqlite::{Connection, functions::FunctionFlags};
 
 use serde::Deserialize;
 
 use serenity::{
+    Client,
+    CreateEmbed,
+    GatewayIntents,
     colours::{
         branding::{BLURPLE, FUCHSIA},
         css::{DANGER, POSITIVE},
     },
-    Client,
-    CreateEmbed,
-    GatewayIntents,
 };
 
 use tracing::{error, level_filters::LevelFilter};
 
 use tracing_appender::rolling;
 
-use tracing_subscriber::{fmt::Layer, layer::SubscriberExt, util::SubscriberInitExt, Layer as _};
+use tracing_subscriber::{Layer as _, fmt::Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
 mod birthday;
 use birthday::Birthday;
