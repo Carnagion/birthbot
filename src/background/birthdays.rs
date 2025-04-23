@@ -14,15 +14,16 @@ use tracing::error;
 
 use crate::{announcement, birthday::Birthday, error::Result, state::State};
 
-const INTERVAL: TimeDelta = TimeDelta::hours(12);
+const INTERVAL: TimeDelta = TimeDelta::hours(1);
 
 #[tracing::instrument]
 pub async fn watch_birthdays(ctx: Context, data: State) {
-    // Spawn a long-running task for announcing birthdays found by the birthday-checking task
     let (tx, rx) = mpsc::channel(100);
+
+    // Spawn a long-running task for announcing birthdays found by the birthday-checking task
     tokio::spawn(announce_birthdays(ctx, rx));
 
-    // PANICS: 1 hour is a valid `std::time::Duration`.
+    // PANICS: The interval used is always positive and thus a valid `std::time::Duration`.
     let mut interval = time::interval(INTERVAL.to_std().unwrap());
     loop {
         // NOTE: The first call to `tick` yields immediately. Also, `Interval` already accounts for time passed
