@@ -1,12 +1,11 @@
 [package]
 name = "birthbot"
 version = "0.3.3"
-edition = "2021"
+edition = "2024"
 authors = ["Indraneel Mahendrakumar"]
 description = "An open-source and ad-free Discord bot for keeping track of birthdays."
 readme = "README.md"
 repository = "https://github.com/Carnagion/birthbot"
-documentation = "https://docs.rs/birthbot"
 license = "MIT"
 
 [dependencies]
