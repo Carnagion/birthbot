@@ -1,6 +1,7 @@
 #![deny(rust_2018_idioms)]
 
 use std::{
+    fs,
     mem,
     path::PathBuf,
     sync::{Arc, Mutex},
@@ -52,7 +53,8 @@ use error::{Error, Result};
 
 mod commands;
 
-mod announce;
+mod background;
+use background::{birthdays::watch_birthdays, changelog::announce_updates};
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
@@ -60,6 +62,7 @@ struct Config {
     token: String,
     db: PathBuf,
     log_dir: PathBuf,
+    changelog_file: Option<PathBuf>,
 }
 
 #[tokio::main]
@@ -131,7 +134,13 @@ async fn setup(
         conn: Arc::new(Mutex::new(conn)),
     };
 
-    tokio::spawn(announce::watch_birthdays(ctx.clone(), data.clone()));
+    tokio::spawn(watch_birthdays(ctx.clone(), data.clone()));
+
+    if let Some(changelog_file) = config.changelog_file {
+        // PANICS: This realistically won't panic, and I don't want to add a variant to the error enum just for this
+        let changelog = fs::read_to_string(changelog_file).unwrap();
+        tokio::spawn(announce_updates(ctx.clone(), data.clone(), changelog));
+    }
 
     Ok(data)
 }

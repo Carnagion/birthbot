@@ -20,7 +20,7 @@ const INTERVAL: TimeDelta = TimeDelta::hours(12);
 pub async fn watch_birthdays(ctx: Context, data: State) {
     // Spawn a long-running task for announcing birthdays found by the birthday-checking task
     let (tx, rx) = mpsc::channel(100);
-    tokio::spawn(announce_birthdays(ctx.clone(), rx));
+    tokio::spawn(announce_birthdays(ctx, rx));
 
     // PANICS: 1 hour is a valid `std::time::Duration`.
     let mut interval = time::interval(INTERVAL.to_std().unwrap());
