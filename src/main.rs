@@ -73,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
         .extract::<Config>()?;
 
     // Setup logging before anything else so that we can log whatever goes wrong
-    let writer = rolling::hourly(&config.log_dir, "birthbot.log");
+    let writer = rolling::daily(&config.log_dir, "birthbot.log");
     let layer = Layer::new()
         .with_writer(writer)
         .with_filter(LevelFilter::WARN);
