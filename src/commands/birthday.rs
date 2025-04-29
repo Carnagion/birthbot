@@ -24,6 +24,7 @@ use super::Context;
 
 pub mod channel;
 
+/// Get someone's (or your) birthday.
 #[poise::command(slash_command, guild_only, ephemeral)]
 #[tracing::instrument]
 pub async fn get(
@@ -86,6 +87,7 @@ pub async fn get(
     Ok(())
 }
 
+/// Update or set your birthday.
 #[poise::command(slash_command, guild_only, ephemeral)]
 #[tracing::instrument]
 pub async fn set(
@@ -178,6 +180,7 @@ pub async fn set(
     Ok(())
 }
 
+/// Remove your birthday.
 #[poise::command(slash_command, guild_only, ephemeral)]
 #[tracing::instrument]
 pub async fn unset(ctx: Context<'_>) -> Result<()> {
@@ -217,6 +220,7 @@ pub async fn unset(ctx: Context<'_>) -> Result<()> {
     Ok(())
 }
 
+/// List everyone's birthdays.
 #[poise::command(slash_command, guild_only, ephemeral)]
 #[tracing::instrument]
 pub async fn list(ctx: Context<'_>) -> Result<()> {
@@ -280,6 +284,7 @@ pub async fn list(ctx: Context<'_>) -> Result<()> {
     Ok(())
 }
 
+/// List upcoming birthdays in order.
 #[poise::command(slash_command, guild_only, ephemeral)]
 #[tracing::instrument]
 pub async fn next(
@@ -350,6 +355,7 @@ pub async fn next(
     Ok(())
 }
 
+/// Show instructions for using birthday commands.
 #[poise::command(slash_command, guild_only, ephemeral)]
 #[tracing::instrument]
 pub async fn help(ctx: Context<'_>) -> Result<()> {

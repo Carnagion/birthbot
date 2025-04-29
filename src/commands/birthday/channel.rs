@@ -14,6 +14,7 @@ use crate::{
     success,
 };
 
+/// Show the channel used for announcing birthdays.
 #[poise::command(slash_command, guild_only, ephemeral)]
 pub async fn get(ctx: Context<'_>) -> Result<()> {
     // Defer response to allow time for executing the query
@@ -49,6 +50,7 @@ pub async fn get(ctx: Context<'_>) -> Result<()> {
     Ok(())
 }
 
+/// Update or set the channel used for announcing birthdays.
 #[poise::command(
     slash_command,
     guild_only,
@@ -86,6 +88,7 @@ pub async fn set(
     Ok(())
 }
 
+/// Remove the channel used for announcing birthdays.
 #[poise::command(
     slash_command,
     guild_only,
